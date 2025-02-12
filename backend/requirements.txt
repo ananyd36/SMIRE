@@ -19,7 +19,7 @@ uvicorn
 pydantic 
 SQLAlchemy 
 alembic
-psycopg2
-rewai 
+crewai 
 celery 
 redis
+fastapi
