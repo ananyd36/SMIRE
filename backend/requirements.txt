@@ -22,4 +22,4 @@ alembic
 crewai 
 celery 
 redis
-fastapi
+fastapi[standard]
