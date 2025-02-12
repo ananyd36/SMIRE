@@ -1,0 +1,28 @@
+backend/.env
+backend/venv/
+# Dependencies
+frontend/node_modules/
+
+# Build Output
+frontend/.next/
+frontend/out/
+
+# Environment Variables
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.production.local
+
+# OS-Specific
+frontend/Thumbs.db
+
+# Editor Settings
+frontend/.idea/
+frontend/.vscode/
+
+# Log Files
+frontend/*.log
+
+# Vercel Deployment
+frontend/.vercel/
+frontend/.now/
