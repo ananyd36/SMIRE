@@ -23,4 +23,4 @@ async def root():
 
 @app.get("/api/data")
 async def get_data():
-    return {"message": "Hello from FastAPI!"}
+    return {"message": "Hello from FastAPI! This is from backend!"}
