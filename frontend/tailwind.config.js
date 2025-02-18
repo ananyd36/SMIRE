@@ -8,6 +8,7 @@ module.exports = {
 	  ],
   theme: {
   	extend: {
+
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
