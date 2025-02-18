@@ -26,7 +26,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="bg-black bg-home-img bg-cover bg-center min-h-screen">
+    <div className="bg-gray-900 bg-home-img bg-cover bg-center min-h-screen">
       <nav className="bg-gray-800 text-white p-4 flex justify-between">
       <button
           onClick={() => setSidebarOpen(true)}
@@ -123,42 +123,42 @@ export default function Home() {
         </div>
       </main>
             {/* What We Offer Section */}
-            <section className="py-16 bg-gray-900 text-white">
+            <section className="py-16 bg-gray-800 text-white">
         <div className="max-w-6xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-8">What We Offer!</h2>
 
           {/* Cards Container */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Book Appointment Card */}
-            <div className="bg-gray-800 p-6 rounded-lg shadow-md hover:shadow-xl">
+            <div className="bg-gray-700 p-6 rounded-lg shadow-md hover:shadow-xl">
               <h3 className="text-xl font-semibold mb-2">Book Appointment</h3>
               <p className="text-gray-400">Schedule your medical appointments hassle-free.</p>
               <Link href="/book" className="text-blue-400 hover:underline mt-4 inline-block">Learn More →</Link>
             </div>
 
             {/* Find Clinics/Doctors Card */}
-            <div className="bg-gray-800 p-6 rounded-lg shadow-md hover:shadow-xl">
+            <div className="bg-gray-700 p-6 rounded-lg shadow-md hover:shadow-xl">
               <h3 className="text-xl font-semibold mb-2">Find Clinics & Doctors</h3>
               <p className="text-gray-400">Locate trusted clinics and medical professionals near you.</p>
               <Link href="/find" className="text-blue-400 hover:underline mt-4 inline-block">Learn More →</Link>
             </div>
 
             {/* News & Updates Card */}
-            <div className="bg-gray-800 p-6 rounded-lg shadow-md hover:shadow-xl">
+            <div className="bg-gray-700 p-6 rounded-lg shadow-md hover:shadow-xl">
               <h3 className="text-xl font-semibold mb-2">Medical News & Updates</h3>
               <p className="text-gray-400">Stay informed with the latest health and medical updates.</p>
               <Link href="/news" className="text-blue-400 hover:underline mt-4 inline-block">Learn More →</Link>
             </div>
 
             {/* OPD Services Card */}
-            <div className="bg-gray-800 p-6 rounded-lg shadow-md hover:shadow-xl">
+            <div className="bg-gray-700 p-6 rounded-lg shadow-md hover:shadow-xl">
               <h3 className="text-xl font-semibold mb-2">Consultation Services</h3>
               <p className="text-gray-400">Get consultation medical support.</p>
               <Link href="/opd" className="text-blue-400 hover:underline mt-4 inline-block">Learn More →</Link>
             </div>
 
             {/* Emergency Support Card */}
-            <div className="bg-gray-800 p-6 rounded-lg shadow-md hover:shadow-xl">
+            <div className="bg-gray-700 p-6 rounded-lg shadow-md hover:shadow-xl">
               <h3 className="text-xl font-semibold mb-2">Emergency Support</h3>
               <p className="text-gray-400">Find emergency medical services and immediate care.</p>
               <Link href="/emergency" className="text-blue-400 hover:underline mt-4 inline-block">Learn More →</Link>
@@ -168,7 +168,7 @@ export default function Home() {
       </section>
 
       {/* Contact Us Section */}
-      <section className="py-16 bg-gray-800 text-white text-center">
+      <section className="py-16 bg-gray-900 text-white text-center">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl font-bold mb-6">Contact Us</h2>
           <p className="text-gray-300 mb-6">Have any questions? Get in touch with us.</p>
@@ -178,7 +178,7 @@ export default function Home() {
         </div>
       </section>
       {/* Footer */}
-      <footer className="bg-gray-900 text-gray-300 py-10 text-center">
+      <footer className="bg-black text-gray-300 py-10 text-center">
         <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-8 text-left">
           {/* Company Info */}
           <div>
