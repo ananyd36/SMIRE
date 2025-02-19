@@ -125,7 +125,7 @@ export default function Home() {
         <h1 className="text-6xl font-bold mb-2 text-white glow-text">Smedex AI Assistant</h1>
           <AnimatedText/>
           <Link
-          href="/sign-in"
+          href="/book"
           className="inline-block px-8 py-3 mt-6 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-full text-xl font-semibold transition-all duration-300 ease-in-out hover:from-purple-500 hover:to-blue-500 hover:translate-y-[-4px] hover:shadow-lg hover:shadow-purple-500/25"
         >
           Get Started
