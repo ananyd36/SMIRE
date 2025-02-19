@@ -40,7 +40,7 @@ export default function Home() {
         </button>
 
         <Link href="/" className="text-lg font-bold">
-          Smedex AI Assistant
+          SMIRE AI
         </Link>
         <input
           type="text"
@@ -122,7 +122,7 @@ export default function Home() {
       <main className="flex flex-col justify-center text-center max-w-5xl mx-auto min-h-screen">
       <div >
       <ParticleBackground />
-        <h1 className="text-6xl font-bold mb-2 text-white glow-text">Smedex AI Assistant</h1>
+        <h1 className="text-6xl font-bold mb-2 text-white glow-text">SMIRE AI </h1>
           <AnimatedText/>
           <Link
           href="/book"
