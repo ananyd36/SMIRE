@@ -2,6 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import ParticleBackground from "@/components/ui/particle-background"
+import AnimatedText from "@/components/ui/animated-text"
+
+
 
 interface ApiResponse {
   message: string;
@@ -60,6 +64,9 @@ export default function Home() {
           <li>
             <Link href="/contact" className="hover:underline">Contact</Link>
           </li>
+          <li>
+            <Link href="/sign-in" className="hover:underline">Sign In</Link>
+          </li>
         </ul>
       </nav>
       {/* Sidebar Overlay */}
@@ -113,13 +120,16 @@ export default function Home() {
         </div>
       </aside>
       <main className="flex flex-col justify-center text-center max-w-5xl mx-auto min-h-screen">
-        <div>
-          <h1 className="text-4xl font-bold text-white">Smedex AI Assistant</h1>
-          <address className="not-italic text-white mt-2">
-            Ask, Book, Inquire! <br />
-            Your all-in-one solution for reliable medical care.
-          </address>
-          {data && <p className="text-white mt-4">{data.message}</p>}
+      <div >
+      <ParticleBackground />
+        <h1 className="text-6xl font-bold mb-2 text-white glow-text">Smedex AI Assistant</h1>
+          <AnimatedText/>
+          <Link
+          href="/sign-in"
+          className="inline-block px-8 py-3 mt-6 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-full text-xl font-semibold transition-all duration-300 ease-in-out hover:from-purple-500 hover:to-blue-500 hover:translate-y-[-4px] hover:shadow-lg hover:shadow-purple-500/25"
+        >
+          Get Started
+        </Link>
         </div>
       </main>
             {/* What We Offer Section */}
