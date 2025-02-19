@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Smedex",
+  title: "SMIRE AI",
   description: "All in one Medical Solution!",
 };
 
