@@ -1,3 +1,4 @@
+import json
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
@@ -70,7 +71,9 @@ async def root():
     )
 
     result = news_crew.kickoff()
-    return {"status": "success", "articles": result}
+    result_str = str(result) if not isinstance(result, str) else result
+
+    return {"status": "success", "articles": json.loads(result_str)}
 
 
 @app.get("/api/data")

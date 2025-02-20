@@ -23,7 +23,7 @@ export default function NewsPage() {
       const response = await fetch(`${apiUrl}/get-news`);
       const data = await response.json();
       if (data.status === "success") {
-        const parsedArticles = JSON.parse(data.articles);
+        const parsedArticles = data.articles;
         setNews(parsedArticles);
       } else {
         setError("Failed to load news.");
