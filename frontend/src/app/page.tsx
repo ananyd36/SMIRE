@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import ParticleBackground from "@/components/ui/particle-background"
 import AnimatedText from "@/components/ui/animated-text"
@@ -14,18 +14,17 @@ interface ApiResponse {
 }
 
 export default function Home() {
-  const [data, setData] = useState<ApiResponse | null>(null);
-  const [query, setQuery] = useState(""); // Track user input
-  const [response, setResponse] = useState<string | null>(null); // Store API response
-  const [loading, setLoading] = useState(false); // Loading state
+  const [query, setQuery] = useState(""); 
+  const [response, setResponse] = useState<string | null>(null); 
+  const [loading, setLoading] = useState(false); 
   const [showModal, setShowModal] = useState(false);
   const [isSidebarOpen, setSidebarOpen] = useState(false);
 
   const handleSubmit = async (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter" && query.trim() !== "") {
       setLoading(true);
-      setResponse(null); // Clear previous response
-      setShowModal(true); // Show modal while fetching
+      setResponse(null); 
+      setShowModal(true); 
 
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -43,19 +42,6 @@ export default function Home() {
       }
     }
   };
-
-  useEffect(() => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-    if (!apiUrl) {
-      console.error("API URL is missing. Please define NEXT_PUBLIC_API_URL.");
-      return;
-    }
-
-    fetch(`${apiUrl}/api/data`)
-      .then((res) => res.json())
-      .then((data: ApiResponse) => setData(data))
-      .catch((error) => console.error("Error fetching data:", error));
-  }, []);
 
   return (
     <div className="bg-gray-900 bg-home-img bg-cover bg-center min-h-screen">
