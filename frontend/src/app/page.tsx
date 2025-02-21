@@ -118,7 +118,7 @@ export default function Home() {
         </Link>
         </div>
       </main>
-            <section className="py-16 bg-gray-800 text-white">
+            <section className="min-h-screen py-16 bg-gray-800 text-white flex items-center justify-center">
         <div className="max-w-6xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-8">What We Offer!</h2>
 
@@ -152,19 +152,15 @@ export default function Home() {
               <p className="text-gray-400">Find emergency medical services and immediate care.</p>
               <Link href="/emergency" className="text-blue-400 hover:underline mt-4 inline-block">Learn More →</Link>
             </div>
+            <div className="bg-gray-700 p-6 rounded-lg shadow-md hover:shadow-xl">
+              <h3 className="text-xl font-semibold mb-2">Contact Us</h3>
+              <p className="text-gray-400">Contact for services</p>
+              <Link href="/contact" className="text-blue-400 hover:underline mt-4 inline-block">Learn More →</Link>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="py-16 bg-gray-900 text-white text-center">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold mb-6">Contact Us</h2>
-          <p className="text-gray-300 mb-6">Have any questions? Get in touch with us.</p>
-          <Link href="/contact" className="px-6 py-3 bg-blue-500 hover:bg-blue-600 rounded-md text-white">
-            Contact Now
-          </Link>
-        </div>
-      </section>
       <footer className="bg-black text-gray-300 py-10 text-center">
         <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-8 text-left">
           <div>
