@@ -1,6 +1,8 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import Loading from "@/components/ui/loading"; // Import Loading Component
+
 
 
 
@@ -56,7 +58,10 @@ export default function FindPage() {
 
 
  return (
+  
    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center relative">
+    { loading ? (
+      <Loading />) : ( <>
      <Link href="/" className="absolute top-6 left-6 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-md text-white">
        ← Back to Home
      </Link>
@@ -72,9 +77,12 @@ export default function FindPage() {
      >
        {loading ? "Searching..." : "Find Now!"}
      </button>
+     </>
+ )
+}
 
-
-     {error && <p className="text-red-500 mt-4">{error}</p>}
+    {loading && <Loading />}
+     {error && <p className ="text-red-500 mt-4">{error}</p>}
 
 
      {info.length > 0 && (

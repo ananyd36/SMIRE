@@ -1,6 +1,8 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import Loading from "@/components/ui/loading"; // Import Loading Component
+
 
 interface NewsArticle {
   Title: string;
@@ -10,12 +12,13 @@ interface NewsArticle {
 
 
 export default function NewsPage() {
-  const [news, setNews] = useState<NewsArticle[]>([]);
+  const [news, setNews] = useState<NewsArticle[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchNews = async () => {
     setLoading(true);
+    setNews(null);
     setError(null);
 
     try {
@@ -37,7 +40,11 @@ export default function NewsPage() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center relative">
-      <Link href="/" className="absolute top-6 left-6 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-md text-white">
+      {loading ? (
+        <Loading />
+      ) : (
+        <>
+        <Link href="/" className="absolute top-6 left-6 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-md text-white">
         ← Back to Home
       </Link>
 
@@ -50,14 +57,20 @@ export default function NewsPage() {
       >
         {loading ? "Fetching..." : "Get News!"}
       </button>
+        </>
+      )
+    }
+      
+            
+      {loading && <Loading />}
 
       {error && <p className="text-red-500 mt-4">{error}</p>}
 
-      {news.length > 0 && (
+      {news && news.length > 0 && (
         <div className="mt-6 bg-gray-800 p-4 rounded-lg w-full max-w-4xl">
           <h2 className="text-2xl font-semibold mb-4">Latest News</h2>
           <ul className="space-y-4">
-            {news.map((article, index) => (
+            {news?.map((article, index) => (
               <li key={index} className="bg-gray-700 p-4 rounded-md shadow-md">
                 <a href={article.Link} target="_blank" rel="noopener noreferrer" className="text-lg font-semibold text-blue-400 hover:underline">
                   {article.Title}

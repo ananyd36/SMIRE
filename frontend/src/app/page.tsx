@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import ParticleBackground from "@/components/ui/particle-background"
 import AnimatedText from "@/components/ui/animated-text"
+import Loading from "@/components/ui/loading"; // Import Loading Component
+
 
 
 
