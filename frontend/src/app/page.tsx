@@ -100,6 +100,8 @@ export default function Home() {
     <li><Link href="/find" className="text-lg font-bold hover:underline">Search</Link></li>
     <li><Link href="/opd" className="text-lg font-bold hover:underline">Consult</Link></li>
     <li><Link href="/news" className="text-lg font-bold hover:underline">News</Link></li>
+    <li><Link href="/news" className="text-lg font-bold hover:underline">Talk</Link></li>
+
   </ul>
 </nav>
 
@@ -199,7 +201,7 @@ export default function Home() {
             </div>
             <div className="bg-gray-700 p-6 rounded-lg shadow-md hover:shadow-xl">
               <h3 className="text-xl font-semibold mb-2">Contact Us</h3>
-              <p className="text-gray-400">Contact for services</p>
+              <p className="text-gray-400">Contact us for our Services.</p>
               <Link href="/contact" className="text-blue-400 hover:underline mt-4 inline-block">Learn More →</Link>
             </div>
           </div>
