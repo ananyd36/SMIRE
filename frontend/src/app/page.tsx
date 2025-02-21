@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import ParticleBackground from "@/components/ui/particle-background"
 import AnimatedText from "@/components/ui/animated-text"
-import Loading from "@/components/ui/loading"; // Import Loading Component
+import ReactMarkdown from "react-markdown";
 
 
 
@@ -15,8 +15,34 @@ interface ApiResponse {
 
 export default function Home() {
   const [data, setData] = useState<ApiResponse | null>(null);
+  const [query, setQuery] = useState(""); // Track user input
+  const [response, setResponse] = useState<string | null>(null); // Store API response
+  const [loading, setLoading] = useState(false); // Loading state
+  const [showModal, setShowModal] = useState(false);
   const [isSidebarOpen, setSidebarOpen] = useState(false);
 
+  const handleSubmit = async (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter" && query.trim() !== "") {
+      setLoading(true);
+      setResponse(null); // Clear previous response
+      setShowModal(true); // Show modal while fetching
+
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        const res = await fetch(`${apiUrl}/get-consultation?question=${query}`);
+        const data = await res.json();
+        if (data.status === "success") {
+          setResponse(data.answer);
+        } else {
+          setResponse("Failed to fetch consultation.");
+        }
+      } catch (err) {
+        setResponse("Error fetching data.");
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
 
   useEffect(() => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -43,11 +69,44 @@ export default function Home() {
       SMIRE AI
     </Link>
 
-    <input
-      type="text"
-      placeholder="Ask any medical inquiry..."
-      className="flex-1 px-3 py-2 rounded-md border border-gray-600 bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-    />
+      <input
+        type="text"
+        placeholder="Ask any medical inquiry..."
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        onKeyDown={handleSubmit} 
+        className="flex-1 px-3 py-2 rounded-md border border-gray-600 bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+
+      {showModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-gray-800 text-white p-6 rounded-lg shadow-lg max-w-lg w-full">
+            <h2 className="text-xl font-semibold">Consultation Response</h2>
+            {loading ? (
+              <p className="mt-4">Loading...</p>
+            ) : (
+                    response && (
+                  <div className="mt-6 max-w-2xl bg-gray-800 p-6 rounded-md shadow-md">
+                    <h3 className="text-lg font-semibold mb-2">Initial Diagnosis:</h3>
+                    
+                    <div className="prose prose-invert max-h-64 overflow-y-auto whitespace-pre-wrap">
+                      <ReactMarkdown>{response}</ReactMarkdown>
+                    </div>
+                  </div>
+                )
+            )}
+
+            {/* Close Button */}
+            <button onClick={() => {
+              setShowModal(false); 
+              setQuery("");
+              } } 
+              className="mt-4 px-4 py-2 bg-blue-500 hover:bg-red-600 rounded-md">
+              Close
+            </button>
+          </div>
+        </div>
+      )}
   </div>
 
   <ul className="flex items-center gap-x-6 w-1/3 justify-between pr-8" >
@@ -108,7 +167,7 @@ export default function Home() {
       <main className="flex flex-col justify-center text-center max-w-5xl mx-auto min-h-screen">
       <div >
       <ParticleBackground />
-        <h1 className="text-6xl font-bold mb-2 text-white glow-text">SMIRE AI </h1>
+        <h1 className="text-6xl font-bold mb-2 text-white glow-text">SMIRE AI</h1>
           <AnimatedText/>
           <Link
           href="/book"
@@ -164,7 +223,7 @@ export default function Home() {
       <footer className="bg-black text-gray-300 py-10 text-center">
         <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-8 text-left">
           <div>
-            <h3 className="text-white text-xl font-semibold mb-3">Smedex AI</h3>
+            <h3 className="text-white text-xl font-semibold mb-3">SMIRE AI</h3>
             <p>Your trusted medical assistant.</p>
           </div>
 

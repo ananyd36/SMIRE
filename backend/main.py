@@ -158,17 +158,16 @@ async def get_nearby_clinics(question: str = Query(...)):
             ## Example:
             **User Input**: "I have had a persistent dry cough for 2 weeks. What could it be?"  
             **Response**:
-            1. The primary concern is a **persistent dry cough** lasting more than **2 weeks**, which suggests a potential **chronic respiratory issue**.
-            2. Common causes include **viral infections, allergies, postnasal drip, GERD, asthma, and early-stage pneumonia**.
-            3. Considering risk factors:
+            1. Common causes include **viral infections, allergies, postnasal drip, GERD, asthma, and early-stage pneumonia**.
+            2. Considering risk factors:
             - If the user has **a fever, weight loss, or night sweats**, tuberculosis or lung infection should be ruled out.
             - If they have **acid reflux**, GERD-induced cough is likely.
-            4. Recommended next steps:
+            3. Recommended next steps:
             - Increase **fluid intake and humidity** to soothe the throat.
             - Avoid triggers like **dust, smoke, and cold air**.
             - Consider **antihistamines if allergies are suspected**.
             - If the cough persists beyond **3-4 weeks or worsens**, consult a doctor for a **chest X-ray or spirometry test**.
-            5. **Urgent medical attention needed if**:
+            4. **Urgent medical attention needed if**:
             - The cough is **accompanied by blood**.
             - There is **shortness of breath or chest pain**.
             Now, please apply this structured reasoning approach to the following user query:
