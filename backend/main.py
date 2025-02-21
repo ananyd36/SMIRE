@@ -1,5 +1,5 @@
 import json
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from dotenv import load_dotenv
@@ -74,6 +74,57 @@ async def root():
     result_str = str(result) if not isinstance(result, str) else result
 
     return {"status": "success", "articles": json.loads(result_str)}
+
+
+
+@app.get("/get-clinics")
+async def get_nearby_clinics(lat: float = Query(...), lng: float = Query(...)):
+   clinic_search_agent = Agent(
+       role="Clinic and Hospital Location Finder",
+       goal="Find nearby hospitals, clinics, and doctors with their addresses, images, and descriptions. Use {lattitude} lattitude and {longitude} longitude to base your reference point",
+       backstory="An expert in medical facilities, using internet searches and API lookups "
+                 "to provide real-time location data for clinics and hospitals.",
+       verbose=True,
+       allow_delegation=True,
+       tools=[search_tool, scrape_tool] 
+   )
+
+
+   fetch_clinics_task = Task(
+       description="Find at least 4 nearby clinics, hospitals, or doctors. "
+                    "Remember to find only highly reviewed places and highly rated doctors."
+                   "Include their name, address, an image link, and a brief description.",
+       expected_output="A JSON list (with 'Name', 'Location', 'Link', and 'Description' as keys) "
+                       "containing details of medical centers.",
+       agent=clinic_search_agent
+   )
+
+
+   clinic_crew = Crew(
+       agents=[clinic_search_agent],
+       tasks=[fetch_clinics_task],
+       verbose=True
+   )
+
+
+   location_inputs =  {
+       "lattitude" : str(lat),
+       "longitude" : str(lng),
+   }
+
+
+   print(location_inputs)
+
+
+
+
+   result = clinic_crew.kickoff(inputs = location_inputs)
+   print("Result------->>>", result)
+   result_str = str(result) if not isinstance(result, str) else result
+
+
+   return {"status": "success", "clinics": json.loads(result_str)}
+
 
 
 @app.get("/api/data")
