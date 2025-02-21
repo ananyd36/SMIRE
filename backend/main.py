@@ -80,8 +80,8 @@ async def root():
 @app.get("/get-clinics")
 async def get_nearby_clinics(lat: float = Query(...), lng: float = Query(...)):
    clinic_search_agent = Agent(
-       role="Clinic and Hospital Location Finder",
-       goal="Find nearby hospitals, clinics, and doctors with their addresses, images, and descriptions. Use {lattitude} lattitude and {longitude} longitude to base your reference point",
+       role="Clinic and Hospital Location Finder Expert",
+       goal="Find nearby hospitals, clinics, and doctors with their addresses, images, and descriptions from publicly available and accessible sites. Use {lattitude} lattitude and {longitude} longitude to base your reference point",
        backstory="An expert in medical facilities, using internet searches and API lookups "
                  "to provide real-time location data for clinics and hospitals.",
        verbose=True,
@@ -93,6 +93,7 @@ async def get_nearby_clinics(lat: float = Query(...), lng: float = Query(...)):
    fetch_clinics_task = Task(
        description="Find at least 4 nearby clinics, hospitals, or doctors. "
                     "Remember to find only highly reviewed places and highly rated doctors."
+                    "Remember to scrap data from only fully accesible sites with high reviews or ratings. Change source immediately if any type of conditions are there to access the site."
                    "Include their name, address, an image link, and a brief description.",
        expected_output="A JSON list (with 'Name', 'Location', 'Link', and 'Description' as keys) "
                        "containing details of medical centers.",
@@ -124,6 +125,73 @@ async def get_nearby_clinics(lat: float = Query(...), lng: float = Query(...)):
 
 
    return {"status": "success", "clinics": json.loads(result_str)}
+
+
+
+@app.get("/get-consultation")
+async def get_nearby_clinics(question: str = Query(...)):
+
+    cot_medical_agent = Agent(
+    role="AI medical assistant trained in clinical reasoning.",
+    goal=(
+        '''## Instructions:
+                1️⃣ **Understand the Query**: Identify the core medical concern in the user's input {query}.  
+                2️⃣ **Consider Relevant Factors**: Age, symptoms, duration, severity, pre-existing conditions, and risk factors.  
+                3️⃣ **Generate a Differential Diagnosis**: List possible causes in order of likelihood, explaining reasoning.  
+                4️⃣ **Suggest Next Steps**: Provide potential home remedies, lifestyle changes, and whether medical consultation is necessary.  
+                5️⃣ **Explain Cautionary Signs**: Mention red flags that indicate urgency (e.g., "If you experience XYZ, seek emergency care immediately.").  
+'''
+    ),
+    backstory=(
+        "You are an expert AI medical consultant with a deep understanding of diagnostic reasoning. "
+        "Trained in clinical pattern recognition, you analyze symptoms logically and provide detailed "
+        "step-by-step medical explanations. Your approach is structured and methodical, ensuring clarity. Keep in mind you dont have to scare the patient."
+        "in patient education. Your main objective is to help users understand their symptoms and guide them "
+        "on the next steps, including at-home care, lifestyle changes, and when to seek professional help."
+    ),
+    verbose=True
+)
+    
+    medical_task = Task(
+    description="Process the user's medical question using structured reasoning.",
+    expected_output=''' Use this structure 
+            ## Example:
+            **User Input**: "I have had a persistent dry cough for 2 weeks. What could it be?"  
+            **Response**:
+            1. The primary concern is a **persistent dry cough** lasting more than **2 weeks**, which suggests a potential **chronic respiratory issue**.
+            2. Common causes include **viral infections, allergies, postnasal drip, GERD, asthma, and early-stage pneumonia**.
+            3. Considering risk factors:
+            - If the user has **a fever, weight loss, or night sweats**, tuberculosis or lung infection should be ruled out.
+            - If they have **acid reflux**, GERD-induced cough is likely.
+            4. Recommended next steps:
+            - Increase **fluid intake and humidity** to soothe the throat.
+            - Avoid triggers like **dust, smoke, and cold air**.
+            - Consider **antihistamines if allergies are suspected**.
+            - If the cough persists beyond **3-4 weeks or worsens**, consult a doctor for a **chest X-ray or spirometry test**.
+            5. **Urgent medical attention needed if**:
+            - The cough is **accompanied by blood**.
+            - There is **shortness of breath or chest pain**.
+            Now, please apply this structured reasoning approach to the following user query:
+                **User Query:** "{query}"''',
+    agent=cot_medical_agent  
+)
+
+    medical_crew = Crew(
+        agents=[cot_medical_agent],  
+        tasks=[medical_task],
+        verbose=True
+)
+    
+    user_query = {
+        "query" : str(question),
+    }
+
+    result = medical_crew.kickoff(inputs = user_query)
+
+
+    print("Result------->>>", result)
+
+    return {"status": "success", "answer": str(result)}
 
 
 
