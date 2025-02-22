@@ -194,6 +194,41 @@ async def get_nearby_clinics(question: str = Query(...)):
 
 
 
+@app.get("/get-doctors")
+async def get_doctors():
+    doctor_search_agent = Agent(
+    role="Expert in Doctor Search",
+    goal="Find nearby medical professionals with high ratings and decent reviews"
+         "General Practitioners (GPs), Dentists, Pediatricians, Dermatologists, Gynecologists can be some of the fields to search for",
+    backstory="Specializing in medical professionals research, this agent "
+              "uses internet and health related knowledge articles/blogs/websites "
+              "to provide a list of medical professionals near the user. With a knack for data, "
+              "the Medical Professional search Agent is the cornerstone for "
+              "searching top medical professionals.",
+    verbose=True,
+    allow_delegation=True,
+    tools = [scrape_tool, search_tool]
+    )
+
+    # Task for news fetching
+    fetch_doctors_task = Task(
+        description="Search and retrieve at least 6 professionals who are medically acclaimed and well known for their services.",
+        expected_output="A JSON list(with 'name','workplace','contact', 'description' as keys) and values as retrieved by the agent",
+        agent = doctor_search_agent,
+    )
+    search_crew = Crew(
+    agents=[doctor_search_agent],
+    tasks=[fetch_doctors_task],
+    verbose=True
+    )
+
+    result = search_crew.kickoff()
+    result_str = str(result) if not isinstance(result, str) else result
+
+    return {"status": "success", "doctors": json.loads(result_str)}
+
+
+
 @app.get("/api/data")
 async def get_data():
     return {"message": "Hello from FastAPI! This is from backend!"}
