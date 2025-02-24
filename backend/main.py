@@ -212,8 +212,8 @@ async def get_doctors():
 
     # Task for news fetching
     fetch_doctors_task = Task(
-        description="Search and retrieve at least 6 professionals who are medically acclaimed and well known for their services.",
-        expected_output="A JSON list(with 'name','workplace','contact', 'description' as keys) and values as retrieved by the agent",
+        description="Search and retrieve at least 6 professionals who are medically acclaimed and well known for their services.Change source immediately if any type of conditions are there to access the site.",
+        expected_output="Keeping context lenght under 16385 output a JSON list(with 'name','workplace','contact', 'description' as keys) and values as retrieved by the agent. Output just the JSON object string and no other strings as prefix or suffix to that object. Just the object string.",
         agent = doctor_search_agent,
     )
     search_crew = Crew(
