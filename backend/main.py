@@ -10,17 +10,17 @@ from psycopg2.extras import RealDictCursor
 from models import MedicalRecord
 
 
+load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:apdjpr22@localhost/medical_db")
+DATABASE_URL = os.getenv("DATABASE_URL")
+# "postgresql://postgres:apdjpr22@localhost/medical_db")
+print(DATABASE_URL)
 
-conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
-cursor = conn.cursor()
 
 
 
 app = FastAPI()
 
-load_dotenv()
 
 openai_api_key = os.getenv("OPENAI_API_KEY")
 serper_api_key = os.getenv("SERPER_API_KEY")
@@ -246,7 +246,9 @@ async def get_doctors():
 @app.post("/add-record")
 async def add_record(record: MedicalRecord):
     try:
-        query = "INSERT INTO medical_records (user_id, type, name, description) VALUES (%s, %s, %s, %s) RETURNING id;"
+        conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+        cursor = conn.cursor()
+        query = "INSERT INTO medical_recs(user_id, type, name, description) VALUES (%s, %s, %s, %s) RETURNING id;"
         cursor.execute(query, (record.user_id, record.type, record.name, record.description))
         conn.commit()
         return {"status": "success", "message": "Record added successfully!"}
@@ -258,7 +260,9 @@ async def add_record(record: MedicalRecord):
 # 🚀 2️⃣ Endpoint to Fetch Logged Records
 @app.get("/get-records/{user_id}")
 async def get_records(user_id: str):
-    cursor.execute("SELECT * FROM medical_records WHERE user_id = %s ;", (user_id,))
+    conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM medical_recs WHERE user_id = %s ;", (user_id,))
     records = cursor.fetchall()
     return {"status": "success", "records": records}
 
