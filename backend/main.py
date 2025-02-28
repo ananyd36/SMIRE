@@ -1,10 +1,20 @@
 import json
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from dotenv import load_dotenv
 from crewai import Crew, Task, Agent, Process
 from crewai_tools import ScrapeWebsiteTool, SerperDevTool
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from models import MedicalRecord
+
+
+
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:apdjpr22@localhost/medical_db")
+
+conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+cursor = conn.cursor()
 
 
 
@@ -229,6 +239,28 @@ async def get_doctors():
     return {"status": "success", "doctors": json.loads(result_str)}
 
 
+
+
+
+
+@app.post("/add-record")
+async def add_record(record: MedicalRecord):
+    try:
+        query = "INSERT INTO medical_records (user_id, type, name, description) VALUES (%s, %s, %s, %s) RETURNING id;"
+        cursor.execute(query, (record.user_id, record.type, record.name, record.description))
+        conn.commit()
+        return {"status": "success", "message": "Record added successfully!"}
+    except Exception as e:
+        print("ERROR: ", str(e))
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+# 🚀 2️⃣ Endpoint to Fetch Logged Records
+@app.get("/get-records/{user_id}")
+async def get_records(user_id: str):
+    cursor.execute("SELECT * FROM medical_records WHERE user_id = %s ;", (user_id,))
+    records = cursor.fetchall()
+    return {"status": "success", "records": records}
 
 @app.get("/api/data")
 async def get_data():

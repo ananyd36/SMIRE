@@ -100,7 +100,7 @@ export default function Home() {
     <li><Link href="/find" className="text-lg font-bold hover:underline">Search</Link></li>
     <li><Link href="/opd" className="text-lg font-bold hover:underline">Consult</Link></li>
     <li><Link href="/news" className="text-lg font-bold hover:underline">News</Link></li>
-    <li><Link href="/news" className="text-lg font-bold hover:underline">Talk</Link></li>
+    <li><Link href="/manage" className="text-lg font-bold hover:underline">Manage</Link></li>
 
   </ul>
 </nav>
