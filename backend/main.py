@@ -60,7 +60,7 @@ async def root():
 
     # Task for news fetching
     fetch_news_task = Task(
-        description="Retrieve and summarize at least 4 recent medical and fitness-related news articles.",
+        description="Retrieve and summarize at least 6 recent medical and fitness-related news articles.",
         expected_output="A JSON list(with 'Title','Link','Snippet' as keys) of recent medicla news articles.",
         agent = news_reporter_agent,
     )

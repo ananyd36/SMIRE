@@ -1,7 +1,9 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import Loading from "@/components/ui/loading"; // Import Loading Component
+import Loading from "@/components/ui/loading";
+import ReactMarkdown from "react-markdown";
+
 
 
 interface NewsArticle {
@@ -71,12 +73,14 @@ export default function NewsPage() {
           <h2 className="text-2xl font-semibold mb-4">Latest News</h2>
           <ul className="space-y-4">
             {news?.map((article, index) => (
+                    <div className="prose prose-invert max-h-64 overflow-y-auto whitespace-pre-wrap">
               <li key={index} className="bg-gray-700 p-4 rounded-md shadow-md">
                 <a href={article.Link} target="_blank" rel="noopener noreferrer" className="text-lg font-semibold text-blue-400 hover:underline">
                   {article.Title}
                 </a>
                 <p className="text-gray-300 mt-2">{article.Snippet}</p>
-              </li>
+                </li>
+                </div>    
             ))}
           </ul>
         </div>
