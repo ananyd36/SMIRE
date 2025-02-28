@@ -56,6 +56,12 @@ export default function BookPage() {
       </>
         )    
       }
+        <button
+          onClick={fetchDoctors}
+          className="mt-4 px-6 py-3 bg-blue-500 hover:bg-blue-600 rounded-md text-white "
+        >
+          Fetch Nearby Doctors!
+        </button>
 
       {/* Show Loading Spinner */}
       {loading ? (
@@ -64,7 +70,7 @@ export default function BookPage() {
       ) : error ? (
         <p className="text-red-500 mt-4">{error}</p>
       ) : (
-      <div className="prose prose-invert w-full flex flex-col items-center gap-y-6 px-4">
+      <div className="prose prose-invert w-full flex flex-col items-center gap-y-6 px-4 pt-4 pb-16">
         {doctors.map((doctor, index) => (
           <div
             key={index}

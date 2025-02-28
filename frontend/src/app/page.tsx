@@ -135,7 +135,7 @@ export default function Home() {
 
           <ul>
             <li className="py-2">
-              <Link href="/dashboard" className="hover:text-blue-400">
+              <Link href="/" className="hover:text-blue-400">
                 Dashboard
               </Link>
             </li>

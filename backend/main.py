@@ -213,7 +213,7 @@ async def get_doctors():
     # Task for news fetching
     fetch_doctors_task = Task(
         description="Search and retrieve at least 6 professionals who are medically acclaimed and well known for their services.Change source immediately if any type of conditions are there to access the site.",
-        expected_output="Keeping context lenght under 16385 output a JSON list(with 'name','workplace','contact', 'description' as keys) and values as retrieved by the agent. Output just the JSON object string and no other strings as prefix or suffix to that object. Just the object string.",
+        expected_output="Keeping context lenght under 16385 tokens and output a JSON list(with 'name','workplace','contact', 'description' as keys) and values as retrieved by the agent. Output just the JSON object string and no other strings as prefix or suffix to that object. Just the object string enclosed in [] brackets.",
         agent = doctor_search_agent,
     )
     search_crew = Crew(
@@ -223,6 +223,7 @@ async def get_doctors():
     )
 
     result = search_crew.kickoff()
+    print(result)
     result_str = str(result) if not isinstance(result, str) else result
 
     return {"status": "success", "doctors": json.loads(result_str)}
