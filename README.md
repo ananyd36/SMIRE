@@ -40,20 +40,20 @@ for intelligent responses and automation.
 ● AI-generated health summaries for easy understanding.
 ● Personalized health trend alerts.
 ```
-### 5 ⃣ OPD (Outpatient Services)
+### 5  OPD (Outpatient Services)
 
 ```
 ● Get on the go consultations.
 ● 
 ```
-## 6 ⃣ Emergency Support - Future Work
+## 6  Emergency Support - Future Work
 
 ```
 ● Emergency contact system to call an ambulance instantly.
 ● Live chat with AI Assistant to provide first-aid guidance.
 ● Integration with emergency helplines.
 ```
-## 7 ⃣ Insights based on User Profile & Medical History - Work in Progress
+## 7  Insights based on User Profile & Medical History - Work in Progress
 
 ```
 ● Securely store medical records & prescriptions.
