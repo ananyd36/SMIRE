@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 
-const phrases = ["Book Appointments!", "Locate Clinics/Doctors!", "Get Instant Consultations!"]
+const phrases = ["Book Appointments!", "Locate Clinics/Doctors!", "Get Instant Consultations!","Manage your Medical Records!"]
 
 export default function AnimatedText() {
   const [text, setText] = useState("")
