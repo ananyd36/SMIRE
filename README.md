@@ -63,13 +63,12 @@ for intelligent responses and automation.
 ```
 ● Next.js (React) for UI.
 ● Tailwind CSS for responsive design.
-● ShadCN/UI or Material-UI for interactive components.
 ```
 ## Backend:
 
 ```
 ● FastAPI / Flask (Python) for AI processing.
-● Node.js (Express) for API handling.
+● Node.js for API handling.
 ```
 ## Database & Storage:
 
