@@ -4,7 +4,7 @@
 
 ## 🛠 Project Overview
 
-**Smedex AI** is a **Generative AI-powered medical assistant** that provides users with
+**SMIRE AI** is a **Generative AI-powered medical assistant** that provides users with
 **health-related functionalities** such as appointment booking, clinic/doctor search, medical
 news updates, OPD services, and emergency support. The system will leverage **AI/ML models**
 for intelligent responses and automation.
