@@ -11,6 +11,14 @@ for intelligent responses and automation.
 
 ## 🚀 Key Features
 
+### 1 Authentication using Supabase
+
+```
+● Added a Authentication Layer to have personalised experience
+● Leveraged Supabase to perform registration, logging in and logging out functionalities.
+
+```
+
 ### 1 Conversational AI (Chatbot)
 
 ```

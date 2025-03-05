@@ -16,7 +16,6 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
     checkSession();
   }, []);
 
-  // Redirect if user is not authenticated
   useEffect(() => {
     if (authenticated === false) {
       router.push("/auth/login");
