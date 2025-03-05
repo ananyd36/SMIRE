@@ -1,17 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import ParticleBackground from "@/components/ui/particle-background"
 import AnimatedText from "@/components/ui/animated-text"
 import ReactMarkdown from "react-markdown";
+import { supabase } from "@/lib/supabaseClient";
+import AuthWrapper from "../components/AuthWrapper";
+
+import { User } from "@supabase/supabase-js";  
 
 
 
-
-interface ApiResponse {
-  message: string;
-}
 
 export default function Home() {
   const [query, setQuery] = useState(""); 
@@ -19,6 +19,17 @@ export default function Home() {
   const [loading, setLoading] = useState(false); 
   const [showModal, setShowModal] = useState(false);
   const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+
+
+
+  useEffect(() => {
+    async function fetchUser() {
+      const { data } = await supabase.auth.getUser();
+      setUser(data.user); 
+    }
+    fetchUser();
+  }, []);
 
   const handleSubmit = async (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter" && query.trim() !== "") {
@@ -44,6 +55,7 @@ export default function Home() {
   };
 
   return (
+    <AuthWrapper>
     <div className="bg-gray-900 bg-home-img bg-cover bg-center min-h-screen">
 <nav className="bg-gray-800 text-white p-3 flex items-center justify-between">
   <div className="flex items-center gap-x-10 w-1/3">
@@ -128,11 +140,16 @@ export default function Home() {
 
         <div className="p-6">
           <h2 className="text-xl font-bold mb-4">Profile</h2>
-          <p className="text-gray-300">Anany Sharma</p>
-          <p className="text-gray-400 text-sm">anany.sharma@ufl.edu</p>
-
-          <hr className="my-4 border-gray-600" />
-
+          {user ? (
+          <>
+            <p className="text-gray-300">{user.email}</p>
+            <p className="text-gray-400 text-sm">
+            {user.user_metadata?.full_name || "User"}
+            </p>
+          </>
+        ) : (
+          <p className="text-gray-400 text-sm">Not Logged In</p>
+        )}
           <ul>
             <li className="py-2">
               <Link href="/" className="hover:text-blue-400">
@@ -145,10 +162,19 @@ export default function Home() {
               </Link>
             </li>
             <li className="py-2">
-              <Link href="/logout" className="hover:text-blue-400">
-                Logout
-              </Link>
-            </li>
+            <button
+              onClick={async () => {
+                const { error } = await supabase.auth.signOut();
+                if (!error) {
+                  window.location.href = "/auth/login";  // Redirect after logout
+                }
+              }}
+              className="hover:text-blue-400 cursor-pointer"
+            >
+              Logout
+            </button>
+          </li>
+
           </ul>
         </div>
       </aside>
@@ -240,5 +266,7 @@ export default function Home() {
         <p className="text-gray-500 text-sm">© {new Date().getFullYear()} Smedex AI. All rights reserved.</p>
       </footer>
     </div>
+    </AuthWrapper>
   );
+
 }
