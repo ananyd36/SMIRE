@@ -23,7 +23,7 @@ interface Locations {
 export default function FindPage() {
    const [info, setInfo] = useState<Locations[]>([]);
    const [loading, setLoading] = useState(false);
-   const [error, setError] = useState<string | null>(null);
+   const [error, setError] = useState<string | null>(null); 
 
 
  const fetchClinics = async () => {
@@ -37,7 +37,7 @@ export default function FindPage() {
      const { latitude, longitude } = position.coords;
       try {
        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-       const response = await fetch(`${apiUrl}/get-clinics?lat=${latitude}&lng=${longitude}`);
+       const response = await fetch(`${apiUrl}/api/get-clinics?lat=${latitude}&lng=${longitude}`);
        const data = await response.json();
         if (data.status === "success") {
          setInfo(data.clinics);

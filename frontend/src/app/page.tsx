@@ -109,8 +109,8 @@ export default function Home() {
 
   <ul className="flex items-center gap-x-6 w-1/3 justify-between pr-8" >
     <li><Link href="/book" className="text-lg font-bold hover:underline">Book</Link></li>
-    <li><Link href="/find" className="text-lg font-bold hover:underline">Search</Link></li>
-    <li><Link href="/opd" className="text-lg font-bold hover:underline">Consult</Link></li>
+    <li><Link href="/search" className="text-lg font-bold hover:underline">Search</Link></li>
+    <li><Link href="/consult" className="text-lg font-bold hover:underline">Consult</Link></li>
     <li><Link href="/news" className="text-lg font-bold hover:underline">News</Link></li>
     <li><Link href="/manage" className="text-lg font-bold hover:underline">Manage</Link></li>
 
@@ -205,7 +205,7 @@ export default function Home() {
             <div className="bg-gray-700 p-6 rounded-lg shadow-md hover:shadow-xl">
               <h3 className="text-xl font-semibold mb-2">Find Clinics & Doctors</h3>
               <p className="text-gray-400">Locate trusted clinics and medical professionals near you.</p>
-              <Link href="/find" className="text-blue-400 hover:underline mt-4 inline-block">Learn More →</Link>
+              <Link href="/search" className="text-blue-400 hover:underline mt-4 inline-block">Learn More →</Link>
             </div>
 
             <div className="bg-gray-700 p-6 rounded-lg shadow-md hover:shadow-xl">
@@ -217,7 +217,7 @@ export default function Home() {
             <div className="bg-gray-700 p-6 rounded-lg shadow-md hover:shadow-xl">
               <h3 className="text-xl font-semibold mb-2">Consultation Services</h3>
               <p className="text-gray-400">Get consultation medical support.</p>
-              <Link href="/opd" className="text-blue-400 hover:underline mt-4 inline-block">Learn More →</Link>
+              <Link href="/consult" className="text-blue-400 hover:underline mt-4 inline-block">Learn More →</Link>
             </div>
 
             <div className="bg-gray-700 p-6 rounded-lg shadow-md hover:shadow-xl">
@@ -245,7 +245,7 @@ export default function Home() {
             <h3 className="text-white text-xl font-semibold mb-3">Quick Links</h3>
             <ul className="space-y-2">
               <li><Link href="/book" className="hover:text-blue-400">Book Appointment</Link></li>
-              <li><Link href="/find" className="hover:text-blue-400">Find Clinics</Link></li>
+              <li><Link href="/search" className="hover:text-blue-400">Find Clinics</Link></li>
               <li><Link href="/news" className="hover:text-blue-400">Medical News</Link></li>
               <li><Link href="/contact" className="hover:text-blue-400">Contact Us</Link></li>
             </ul>

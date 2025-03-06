@@ -25,7 +25,7 @@ export default function NewsPage() {
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      const response = await fetch(`${apiUrl}/get-news`);
+      const response = await fetch(`${apiUrl}/api/get-news`);
       const data = await response.json();
       if (data.status === "success") {
         const parsedArticles = data.articles;

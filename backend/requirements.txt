@@ -19,7 +19,7 @@ uvicorn
 pydantic 
 SQLAlchemy 
 alembic
-crewai 
+crewai
 celery 
 redis
 fastapi[standard]

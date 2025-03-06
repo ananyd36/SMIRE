@@ -22,10 +22,16 @@ export default function BookPage() {
   const fetchDoctors = async () => {
     setLoading(true);
     setError(null);
+    if (!navigator.geolocation) {
+      setError("Geolocation is not supported by your browser.");
+      return;
+    }
+     navigator.geolocation.getCurrentPosition(async (position) => {
+      const { latitude, longitude } = position.coords;
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      const response = await fetch(`${apiUrl}/get-doctors`);
+      const response = await fetch(`${apiUrl}/api/get-doctors?lat=${latitude}&lng=${longitude}`);
       const data = await response.json();
 
       if (data.status === "success") {
@@ -38,6 +44,7 @@ export default function BookPage() {
     } finally {
       setLoading(false);
     }
+  });
   };
 
   return (

@@ -22,7 +22,7 @@ export default function OpdPage() {
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      const res = await fetch(`${apiUrl}/get-consultation?question=${query}`);
+      const res = await fetch(`${apiUrl}/api/get-consultation?question=${query}`);
       const data = await res.json();
       if (data.status === "success") {
         setResponse(data.answer);
