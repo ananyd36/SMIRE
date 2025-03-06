@@ -11,7 +11,7 @@ for intelligent responses and automation.
 
 ## 🚀 Key Features
 
-### 1 Authentication using Supabase
+### 1 Authentication using Supabase (Personalised interation)
 
 ```
 ● Added a Authentication Layer to have personalised experience
@@ -19,7 +19,7 @@ for intelligent responses and automation.
 
 ```
 
-### 1 Conversational AI (Chatbot)
+### 1 Conversational AI (Ask anything medical related, on the go with convenience)
 
 ```
 ● AI-powered chatbot for answering medical inquiries.
@@ -27,21 +27,21 @@ for intelligent responses and automation.
 ● Integration with OpenAI API (GPT-4) for contextual responses.
 ● Voice-to-text input for accessibility. - Work in progress
 ```
-### 2  Appointment Booking System
+### 2  Appointment Booking System (Find nearby doctors and book appointment)
 
 ```
 ● Users can book medical appointments with verified doctors and hospitals.
 ● Integration with Google Calendar/Outlook for scheduling. - Future Work
 ● Appointment reminders and notifications. - Future Work
 ```
-### 3 Find Clinics & Doctors
+### 3 Find Clinics & Doctors (Get a list of all nearby hospitals,clinics to choose/specify your medical requirement)
 
 ```
 ● Users can search for nearby hospitals, clinics, and doctors.
 ● Filters: Location, specialization, availability, and patient ratings.
 ● Integration with Google Maps API for navigation. - Future Work
 ```
-### 4  Medical News & Updates
+### 4  Medical News & Updates (Be up to date with all the latest news.)
 
 ```
 ● Fetch real-time medical news from reliable sources like WHO, CDC, and PubMed.
