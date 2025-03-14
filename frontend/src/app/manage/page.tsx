@@ -104,7 +104,7 @@ export default function ManagePage() {
         setError("Failed to upload report.");
       }
     } catch (err) {
-      setError("Error uploading report.");
+      setError("Error uploading your report.");
     } finally {
       setLoading(false);
     }
