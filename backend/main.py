@@ -7,7 +7,7 @@ from crewai_tools import ScrapeWebsiteTool, SerperDevTool
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from models import MedicalRecord
-from api import news,clinics, consult, book
+from api import news,clinics, consult, book, manage
 from dotenv import load_dotenv
 from settings import Settings
 
@@ -40,6 +40,7 @@ app.include_router(news.router, prefix="/api")
 app.include_router(clinics.router, prefix="/api")
 app.include_router(consult.router, prefix="/api")
 app.include_router(book.router, prefix="/api")
+app.include_router(manage.router, prefix="/api")
 
 
 

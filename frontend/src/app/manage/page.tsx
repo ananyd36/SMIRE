@@ -90,7 +90,7 @@ export default function ManagePage() {
       formDataObj.append("description", formData.description);
       formDataObj.append("type", "report");
 
-      const response = await fetch(`${apiUrl}/upload-report`, {
+      const response = await fetch(`${apiUrl}/api/upload-report`, {
         method: "POST",
         body: formDataObj,
       });
@@ -99,7 +99,8 @@ export default function ManagePage() {
       if (data.status === "success") {
         setFormData({ ...formData, name: "", description: "" });
         setFile(null);
-        fetchRecords(); // Refresh records
+        fetchRecords();
+        setError(null) // Refresh records
       } else {
         setError("Failed to upload report.");
       }

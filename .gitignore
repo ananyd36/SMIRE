@@ -3,6 +3,8 @@ backend/venv/
 # Dependencies
 frontend/node_modules/
 
+backend/medical_reports
+backend/uploads
 # Build Output
 frontend/.next/
 frontend/out/
