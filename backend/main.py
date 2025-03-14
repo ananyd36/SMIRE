@@ -64,10 +64,10 @@ async def add_record(record: MedicalRecord):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/get-records/{user_id}")
-async def get_records(user_id: str):
+async def get_records(user_id: str, type: str):
     conn = psycopg2.connect(Settings.DATABASE_URL, cursor_factory=RealDictCursor)
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM medical_recs WHERE user_id = %s ;", (user_id,))
+    cursor.execute("SELECT * FROM medical_recs WHERE user_id = %s and type = %s ;", (user_id,type))
     records = cursor.fetchall()
     return {"status": "success", "records": records}
 

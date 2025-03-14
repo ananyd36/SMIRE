@@ -12,7 +12,8 @@ interface Record {
 
 export default function ManagePage() {
   const [activeTab, setActiveTab] = useState("medicine");
-  const [records, setRecords] = useState<Record[]>([]);
+  const [medicineRecords, setMedicineRecords] = useState<Record[]>([]);
+  const [reportRecords, setReportRecords] = useState<Record[]>([]); 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({ type: "medicine", name: "", description: "" });
@@ -23,17 +24,23 @@ export default function ManagePage() {
   const userId = "ashar534";
 
   useEffect(() => {
-    fetchRecords();
-  }, []);
+    fetchRecords(activeTab);
+  }, [activeTab]);
 
-  // Fetch stored medical records
-  const fetchRecords = async () => {
+
+  const fetchRecords = async (recordType: string | undefined) => {
     try {
+      setLoading(true);
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      const response = await fetch(`${apiUrl}/get-records/${userId}`);
+      const response = await fetch(`${apiUrl}/get-records/${userId}?type=${recordType}`);
       const data = await response.json();
+  
       if (data.status === "success") {
-        setRecords(data.records);
+        if (recordType === "medicine") {
+          setMedicineRecords(data.records);
+        } else if (recordType === "report") {
+          setReportRecords(data.records);
+        }
       } else {
         setError("Failed to fetch records.");
       }
@@ -43,6 +50,7 @@ export default function ManagePage() {
       setLoading(false);
     }
   };
+  
 
   // Handle form submission for medicine
   const handleMedicineSubmit = async (e: React.FormEvent) => {
@@ -60,7 +68,7 @@ export default function ManagePage() {
       const data = await response.json();
       if (data.status === "success") {
         setFormData({ ...formData, name: "", description: "" });
-        fetchRecords(); // Refresh records
+        fetchRecords('medicine'); // Refresh records
       } else {
         setError("Failed to log medicine record.");
       }
@@ -99,7 +107,7 @@ export default function ManagePage() {
       if (data.status === "success") {
         setFormData({ ...formData, name: "", description: "" });
         setFile(null);
-        fetchRecords();
+        fetchRecords('report');
         setError(null) // Refresh records
       } else {
         setError("Failed to upload report.");
@@ -223,9 +231,9 @@ export default function ManagePage() {
             <h2 className="text-xl font-semibold mb-4">Your Medicine Records</h2>
             {loading ? (
               <p>Loading...</p>
-            ) : records.length > 0 ? (
+            ) : medicineRecords.length > 0 ? (
               <div className="grid gap-4">
-                {records
+                {medicineRecords
                   .filter(record => record.type === "medicine")
                   .map((record) => (
                     <div key={record.id} className="bg-gray-800 p-4 rounded-md shadow-md">
@@ -249,53 +257,76 @@ export default function ManagePage() {
         </div>
       )}
 
+      {/* Report Upload Form & Records */}
+  {activeTab === "report" && (
+    <div className="">
       {/* Report Upload Form */}
-      {activeTab === "report" && (
-        <div>
-        <form onSubmit={handleReportSubmit} className="bg-gray-800 p-6 rounded-md shadow-md w-full max-w-lg mb-8">
-          <h2 className="text-xl font-semibold mb-4">Upload Medical Report</h2>
-          
-          <label className="block mb-2">Report Title:</label>
+      <form onSubmit={handleReportSubmit} className="bg-gray-800 p-6 rounded-md shadow-md w-full max-w-lg mb-8">
+        <h2 className="text-xl font-semibold mb-4">Upload Medical Report</h2>
+        
+        <label className="block mb-2">Report Title:</label>
+        <input
+          type="text"
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          required
+          placeholder="Enter report title"
+          className="w-full p-2 rounded-md bg-gray-700 border border-gray-600"
+        />
+
+        <label className="block mt-4 mb-2">Report Description:</label>
+        <textarea
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          required
+          placeholder="Enter details about this report"
+          className="w-full p-2 rounded-md bg-gray-700 border border-gray-600 h-24"
+        />
+
+        <div className="mt-4">
+          <label className="block mb-2">Upload File:</label>
           <input
-            type="text"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            required
-            placeholder="Enter report title"
+            type="file"
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
             className="w-full p-2 rounded-md bg-gray-700 border border-gray-600"
           />
+          {file && (
+            <p className="text-sm text-gray-400 mt-2">
+              Selected file: {file.name} ({Math.round(file.size / 1024)} KB)
+            </p>
+          )}
+        </div>
 
-          <label className="block mt-4 mb-2">Report Description:</label>
-          <textarea
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            required
-            placeholder="Enter details about this report"
-            className="w-full p-2 rounded-md bg-gray-700 border border-gray-600 h-24"
-          />
+        <button 
+          type="submit" 
+          className="mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-md w-full"
+        >
+          {loading ? "Uploading..." : "Upload Report"}
+        </button>
+      </form>
 
-          <div className="mt-4">
-            <label className="block mb-2">Upload File:</label>
-            <input
-              type="file"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-              className="w-full p-2 rounded-md bg-gray-700 border border-gray-600"
-            />
-            {file && (
-              <p className="text-sm text-gray-400 mt-2">
-                Selected file: {file.name} ({Math.round(file.size / 1024)} KB)
-              </p>
-            )}
-          </div>
-
-          <button 
-            type="submit" 
-            className="mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-md w-full"
-          >
-            {loading ? "Uploading..." : "Upload Report"}
-          </button>
-        </form>
-
+      {/* Display Report Records */}
+      <h2 className="text-xl font-semibold mb-4">Your Report Records</h2>
+      {loading ? (
+        <p>Loading...</p>
+      ) : reportRecords.length > 0 ? (
+        <div className="grid gap-4">
+          {reportRecords.map((record) => (
+            <div key={record.id} className="bg-gray-800 p-4 rounded-md shadow-md">
+              <h3 className="text-lg font-semibold">
+                {record.name} 
+                <span className="ml-2 text-sm bg-gray-700 px-2 py-1 rounded">
+                  📄 Report
+                </span>
+              </h3>
+              <p className="text-gray-300 mt-2">{record.description}</p>
+              <p className="text-gray-500 text-sm mt-2">Added on: {new Date(record.date_added).toLocaleString()}</p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-gray-400">No report records found. Start by uploading a report.</p>
+      )}
         </div>
         
       )}
