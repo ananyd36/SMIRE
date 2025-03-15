@@ -221,8 +221,8 @@ export default function Home() {
             </div>
 
             <div className="bg-gray-700 p-6 rounded-lg shadow-md hover:shadow-xl">
-              <h3 className="text-xl font-semibold mb-2">Emergency Support</h3>
-              <p className="text-gray-400">Find emergency medical services and immediate care.</p>
+              <h3 className="text-xl font-semibold mb-2">Manage Your Health</h3>
+              <p className="text-gray-400">Log your prescriptions and chat with your reports.</p>
               <Link href="/" className="text-blue-400 hover:underline mt-4 inline-block">Learn More →</Link>
             </div>
             <div className="bg-gray-700 p-6 rounded-lg shadow-md hover:shadow-xl">
