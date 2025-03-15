@@ -44,7 +44,16 @@ async def upload_report(
             "description": description,
             "type": type
         }
+        
+        '''Outline for next steps
 
+            1. Use Deepseek vision models to perform OCR and create the file into a much structured and parseable manner 
+            2. The use those the converted document and chunk them using anthropic onctextual retrieval technique plus BM 25 like other metadata creation.
+            3. Store them in pinecone vector DB or search for more optimized workflow.
+            4. For retrieval, use techniques like reranking/use different similarity searches.
+            5. Display the output back into the UI
+
+        '''
 
         query = """
         INSERT INTO medical_recs(user_id, type, name, description)
