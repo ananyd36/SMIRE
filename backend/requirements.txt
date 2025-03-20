@@ -1,9 +1,4 @@
-phidata
 python-dotenv
-yfinance
-packaging
-duckduckgo-search
-fastapi
 uvicorn
 groq
 openai
@@ -11,11 +6,8 @@ sqlalchemy
 pgvector
 psycopg[binary]
 pypdf
-streamlit
-phidata
 google-generativeai
-fastapi 
-uvicorn 
+fastapi  
 pydantic 
 SQLAlchemy 
 alembic
@@ -24,3 +16,6 @@ celery
 redis
 fastapi[standard]
 crewai_tools
+transformers
+databricks-sdk
+pytesseract

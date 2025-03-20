@@ -2,11 +2,9 @@ import json
 from fastapi import FastAPI, Query, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 import os
-from crewai import Crew, Task, Agent, Process
-from crewai_tools import ScrapeWebsiteTool, SerperDevTool
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from models import MedicalRecord
+from models import AddMedicalRecord , DelMedicalRecord 
 from api import news,clinics, consult, book, manage
 from dotenv import load_dotenv
 from settings import Settings
@@ -29,7 +27,7 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],  # Allow all methods (GET, POST, PUT, DELETE)
     allow_headers=["*"],  # Allow all headers
@@ -50,7 +48,7 @@ async def root():
 
 
 @app.post("/add-record")
-async def add_record(record: MedicalRecord):
+async def add_record(record: AddMedicalRecord):
     try:
         conn = psycopg2.connect(Settings.DATABASE_URL, cursor_factory=RealDictCursor)
         cursor = conn.cursor()
@@ -65,9 +63,31 @@ async def add_record(record: MedicalRecord):
 
 @app.get("/get-records/{user_id}")
 async def get_records(user_id: str, type: str):
-    conn = psycopg2.connect(Settings.DATABASE_URL, cursor_factory=RealDictCursor)
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM medical_recs WHERE user_id = %s and type = %s ;", (user_id,type))
-    records = cursor.fetchall()
-    return {"status": "success", "records": records}
+    try:
+        conn = psycopg2.connect(Settings.DATABASE_URL, cursor_factory=RealDictCursor)
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM medical_recs WHERE user_id = %s and type = %s ;", (user_id,type))
+        records = cursor.fetchall()
+        return {"status": "success", "records": records}
+    except Exception as e:
+        conn.rollback()
+        return {"status": "error", "message": str(e)}
+    finally:
+        conn.close()
+        cursor.close()
+
+@app.post("/delete-record")
+async def delete_record(request : DelMedicalRecord):
+    try:
+        conn = psycopg2.connect(Settings.DATABASE_URL, cursor_factory=RealDictCursor)
+        cursor = conn.cursor()
+        cursor.execute("Delete from medical_recs where user_id = %s and id = %s and type = %s and name = %s and description = %s;", (request.user_id, request.id, request.type, request.name, request.description))
+        conn.commit()
+        return {"status": "success"}
+    except Exception as e:
+        conn.rollback()
+        return {"status": "error", "message": str(e)}
+    finally:
+        conn.close()
+        cursor.close()
 

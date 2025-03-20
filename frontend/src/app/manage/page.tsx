@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { SortDescIcon } from "lucide-react";
 
 interface Record {
   id: number;
@@ -78,6 +79,32 @@ export default function ManagePage() {
       setLoading(false);
     }
   };
+
+
+    // Handle form submission for medicine
+    const deleteRecord = async (type_id : number, type : string, name : string, description : string) => {
+      setLoading(true);
+      console.log(JSON.stringify({ userid : userId, id : type_id, type : type , name : name, description: description}));
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        const response = await fetch(`${apiUrl}/delete-record`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id : userId, id :type_id,  type : type , name : name, description: description}),
+        });
+  
+        const data = await response.json();
+        if (data.status === "success") {
+          fetchRecords(activeTab); 
+        } else {
+          setError("Failed to delete record.");
+        }
+      } catch (err) {
+        setError("Error logging data.");
+      } finally {
+        setLoading(false);
+      }
+    };
 
   // Handle file upload for medical reports
   const handleReportSubmit = async (e: React.FormEvent) => {
@@ -247,6 +274,12 @@ export default function ManagePage() {
                       </div>
                       <p className="text-gray-300 mt-2">{record.description}</p>
                       <p className="text-gray-500 text-sm mt-2">Added on: {new Date(record.date_added).toLocaleString()}</p>
+                      <button 
+                      onClick={() => deleteRecord(record.id, 'medicine', record.name, record.description)} 
+                      className="mt-4 px-4 py-2 bg-red-500 hover:bg-red-600 rounded-md w-full"
+                    >
+                      Delete Record
+                    </button>
                     </div>
                   ))}
               </div>
@@ -321,6 +354,12 @@ export default function ManagePage() {
               </h3>
               <p className="text-gray-300 mt-2">{record.description}</p>
               <p className="text-gray-500 text-sm mt-2">Added on: {new Date(record.date_added).toLocaleString()}</p>
+              <button 
+                      onClick={() => deleteRecord(record.id, 'report', record.name, record.description)} 
+                      className="mt-4 px-4 py-2 bg-red-500 hover:bg-red-600 rounded-md w-full"
+                    >
+                      Delete Record
+                    </button>
             </div>
           ))}
         </div>
