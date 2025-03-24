@@ -5,11 +5,17 @@ import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from models import AddMedicalRecord , DelMedicalRecord 
-from api import news,clinics, consult, book, manage
+from api import news, clinics, consult, book, manage
 from dotenv import load_dotenv
 from settings import Settings
+from twilio.twiml.voice_response import VoiceResponse, Gather
+import requests
+from dotenv import load_dotenv
 
 
+
+
+load_dotenv()
 app = FastAPI()
 
 
@@ -90,4 +96,42 @@ async def delete_record(request : DelMedicalRecord):
     finally:
         conn.close()
         cursor.close()
+
+
+
+# In your FastAPI app
+@app.route('/handle-booking-call', methods=['POST'])
+def handle_booking_call():
+    response = VoiceResponse()
+    
+    with response.gather(
+        numDigits=1, 
+        action='/process-confirmation',  
+        method='POST'  
+    ) as gather:
+        gather.say("Hello, we are calling to confirm an appointment. Press 1 to confirm, 2 to reschedule.")
+    
+
+    response.say("Sorry, we didn't receive your input.")
+    response.redirect('/handle-booking-call')
+    
+    return str(response), 200, {'Content-Type': 'application/xml'}
+
+@app.route('/process-confirmation', methods=['POST'])
+def process_confirmation():
+    digit_pressed = requests.form.get('Digits')
+    
+    if digit_pressed == '1':
+        # Appointment confirmed)
+        print("User Pressed 1")
+    elif digit_pressed == '2':
+        # Rescheduling
+        print("User Pressed 2")
+
+    
+    response = VoiceResponse()
+    response.say("Thank you for your response. Goodbye.")
+    response.hangup()
+    
+    return str(response), 200, {'Content-Type': 'application/xml'}
 

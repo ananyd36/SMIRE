@@ -13,3 +13,13 @@ class DelMedicalRecord(BaseModel):
     type: str  
     name: str
     description: str
+
+
+class PatientDetails(BaseModel):
+    name: str
+    phone: str
+
+class AppointmentBooking(BaseModel):
+    doctor_name: str
+    doctor_contact: str
+    patient_details: PatientDetails

@@ -12,7 +12,7 @@ from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 import pytesseract
 from google import genai
 from google.genai import types
-import pinecone
+# import pinecone
 import openai
 
 
@@ -24,21 +24,21 @@ router = APIRouter()
 UPLOAD_DIR = "uploads"  
 os.makedirs(UPLOAD_DIR, exist_ok=True)  
 
-pinecone.init(api_key=os.environ.get("PINECONE_API_KEY"), environment="us-east-1")
+# pinecone.init(api_key=os.environ.get("PINECONE_API_KEY"), environment="us-east-1")
 
 
-def upsert_to_pinecone(text, embeddings, namespace="medical_reports"):
-    try:
-        index = pinecone.Index("smire")  
-        vector_id = str(hash(text))  
+# def upsert_to_pinecone(text, embeddings, namespace="medical_reports"):
+#     try:
+#         index = pinecone.Index("smire")  
+#         vector_id = str(hash(text))  
         
-        index.upsert(
-            vectors=[(vector_id, embeddings)],
-            namespace=namespace
-        )
-        return f"Upserted data with ID {vector_id} into Pinecone"
-    except Exception as e:
-        return f"Error upserting to Pinecone: {e}"
+#         index.upsert(
+#             vectors=[(vector_id, embeddings)],
+#             namespace=namespace
+#         )
+#         return f"Upserted data with ID {vector_id} into Pinecone"
+#     except Exception as e:
+#         return f"Error upserting to Pinecone: {e}"
 
 
 
@@ -98,8 +98,8 @@ def structure_text_with_lm(text):
     try:
         structured_text = parse_structure_gemini(text)
         embeddings = generate_embeddings(structured_text)
-        result = upsert_to_pinecone(structured_text, embeddings)
-        print(result)
+        # result = upsert_to_pinecone(structured_text, embeddings)
+        # print(result)
         return True
     except Exception as e:
         return f"Error structuring text: {str(e)}"

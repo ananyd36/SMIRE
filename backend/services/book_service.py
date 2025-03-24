@@ -9,8 +9,6 @@ scrape_tool = ScrapeWebsiteTool()
 
 
 
-
-
 def get_doctors(lat: float = Query(...), lng: float = Query(...)):
     doctor_search_agent = Agent(
     role="Expert in Doctor Search",
