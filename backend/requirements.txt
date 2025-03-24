@@ -19,3 +19,6 @@ crewai_tools
 transformers
 databricks-sdk
 pytesseract
+google
+google-genai
+pinecone-client

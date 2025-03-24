@@ -10,6 +10,10 @@ from PIL import Image
 from pdf2image import convert_from_path
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 import pytesseract
+from google import genai
+from google.genai import types
+import pinecone
+import openai
 
 
 
@@ -20,19 +24,88 @@ router = APIRouter()
 UPLOAD_DIR = "uploads"  
 os.makedirs(UPLOAD_DIR, exist_ok=True)  
 
+pinecone.init(api_key=os.environ.get("PINECONE_API_KEY"), environment="us-east-1")
+
+
+def upsert_to_pinecone(text, embeddings, namespace="medical_reports"):
+    try:
+        index = pinecone.Index("smire")  
+        vector_id = str(hash(text))  
+        
+        index.upsert(
+            vectors=[(vector_id, embeddings)],
+            namespace=namespace
+        )
+        return f"Upserted data with ID {vector_id} into Pinecone"
+    except Exception as e:
+        return f"Error upserting to Pinecone: {e}"
+
+
+
+def generate_embeddings(text):
+    try:
+        response = openai.Embedding.create(
+            model="text-embedding-ada-002", 
+            input=text
+        )
+        embeddings = response['data'][0]['embedding']
+        return embeddings
+    except Exception as e:
+        return f"Error generating embeddings: {e}"
+    
+
+
+
+def parse_structure_gemini(text):
+    client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+
+    model = "gemini-2.0-flash"
+
+    prompt = f"""You are an expert in parsing medical report data. You are given this text: {text}. 
+Your job is to summarize all the relevant information regarding the patient, tests results, test metadata like date of tests,etc. Keep it short as possible while covering all test results"""
+
+    contents = [
+        types.Content(
+            role="user",
+            parts=[
+                types.Part.from_text(text=prompt),
+            ],
+        ),
+    ]
+
+    generate_content_config = types.GenerateContentConfig(
+        temperature=0,
+        top_p=1,
+        top_k=1,
+        max_output_tokens=len(text),
+        response_mime_type="text/plain",
+    )
+
+    try:
+        response = client.models.generate_content(
+            model=model,
+            contents=contents,
+            config=generate_content_config,
+        )
+        return response.candidates[0].content.parts[0].text.strip()
+
+    except Exception as e:
+        return f"Error processing with Gemini: {e}"
+    
+
+
 def structure_text_with_lm(text):
     try:
-        tokenizer = AutoTokenizer.from_pretrained("google/flan-t5-small") 
-        model = AutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-small")
-
-        prompt = f"Structure the following medical text: {text}. Extract key information such as patient name, date, diagnosis, and treatment."
-        inputs = tokenizer(prompt, return_tensors="pt", max_length=512, truncation=True)
-        with torch.no_grad():
-            outputs = model.generate(**inputs, max_length=1024)
-        structured_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
-        return structured_text
+        structured_text = parse_structure_gemini(text)
+        embeddings = generate_embeddings(structured_text)
+        result = upsert_to_pinecone(structured_text, embeddings)
+        print(result)
+        return True
     except Exception as e:
         return f"Error structuring text: {str(e)}"
+    
+
+
 
 
 def process_pdf_with_tesseract_and_lm(pdf_path):
@@ -50,9 +123,7 @@ def process_pdf_with_tesseract_and_lm(pdf_path):
             full_text += text + "\n"
         except Exception as e:
             full_text += f"Error OCRing image: {str(e)}\n"
-    print(full_text)
-    structured_text = structure_text_with_lm(full_text)
-    return structured_text
+    return structure_text_with_lm(full_text)
 
 
 @router.post("/upload-report")
@@ -70,45 +141,31 @@ async def upload_report(
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         
-        result = process_pdf_with_tesseract_and_lm(file_path)
+        if(process_pdf_with_tesseract_and_lm(file_path)):
 
-        print("---------------------")
-        print("Result=====", result)
-        print("---------------------")
+            conn = psycopg2.connect(Settings.DATABASE_URL, cursor_factory=RealDictCursor)
+            cursor = conn.cursor()
+            
+            # Extract file details
+            file_details = {
+                "filename": file.filename,
+                "content_type": file.content_type,
+                "size": os.path.getsize(file_path),  
+                "user_id": user_id,
+                "name": name,
+                "description": description,
+                "type": type
+            }
 
-        conn = psycopg2.connect(Settings.DATABASE_URL, cursor_factory=RealDictCursor)
-        cursor = conn.cursor()
-        
-        # Extract file details
-        file_details = {
-            "filename": file.filename,
-            "content_type": file.content_type,
-            "size": os.path.getsize(file_path),  
-            "user_id": user_id,
-            "name": name,
-            "description": description,
-            "type": type
-        }
-        
-        '''Outline for next steps
+            query = """
+            INSERT INTO medical_recs(user_id, type, name, description)
+            VALUES (%s, %s, %s, %s) RETURNING id;
+            """
+            cursor.execute(query, (user_id, type, name, description))
+            conn.commit()
 
-            1. Use Deepseek vision models to perform OCR and create the file into a much structured and parseable manner 
-            2. The use those the converted document and chunk them using anthropic onctextual retrieval technique plus BM 25 like other metadata creation.
-            3. Store them in pinecone vector DB or search for more optimized workflow.
-            4. For retrieval, use techniques like reranking/use different similarity searches.
-            5. Display the output back into the UI
-
-        '''
-
-        query = """
-        INSERT INTO medical_recs(user_id, type, name, description)
-        VALUES (%s, %s, %s, %s) RETURNING id;
-        """
-        cursor.execute(query, (user_id, type, name, description))
-        conn.commit()
-
-
-
-        return {"status": "success", "file_details": file_details}
+            return {"status": "success", "file_details": file_details}
+        else:
+            return {"status": "failure"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
