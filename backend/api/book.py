@@ -40,7 +40,7 @@ async def book_appointment(appointment_data: AppointmentBooking):
         call = client.calls.create(
             to='+13522569034',
             from_=twilio_phone_number,
-            url='https://be88-128-227-1-24.ngrok-free.app/handle-booking-call',  
+            url='https://32ce-2600-8807-c184-7500-a16b-f104-da98-39ce.ngrok-free.app/handle-booking-call',  
         )
         
         # booking_details = {
