@@ -12,8 +12,9 @@ from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 import pytesseract
 from google import genai
 from google.genai import types
-# import pinecone
+from pinecone import Pinecone, ServerlessSpec
 import openai
+from sentence_transformers import SentenceTransformer
 
 
 
@@ -24,41 +25,39 @@ router = APIRouter()
 UPLOAD_DIR = "uploads"  
 os.makedirs(UPLOAD_DIR, exist_ok=True)  
 
-# pinecone.init(api_key=os.environ.get("PINECONE_API_KEY"), environment="us-east-1")
 
+# Initialize Pinecone
+api_key = os.getenv('PINECONE_API_KEY')
+pc = Pinecone(api_key=api_key)
+cloud = os.environ.get('PINECONE_CLOUD') or 'aws'
+region = os.environ.get('PINECONE_REGION') or 'us-east-1'
+spec = ServerlessSpec(cloud=cloud, region=region)
 
-# def upsert_to_pinecone(text, embeddings, namespace="medical_reports"):
-#     try:
-#         index = pinecone.Index("smire")  
-#         vector_id = str(hash(text))  
-        
-#         index.upsert(
-#             vectors=[(vector_id, embeddings)],
-#             namespace=namespace
-#         )
-#         return f"Upserted data with ID {vector_id} into Pinecone"
-#     except Exception as e:
-#         return f"Error upserting to Pinecone: {e}"
-
-
+index_name = 'smire'
+if index_name not in pc.list_indexes().names():
+    pc.create_index(index_name, dimension=2048, metric='cosine', spec=spec)
+index_main = pc.Index(index_name)
 
 def generate_embeddings(text):
     try:
-        response = openai.Embedding.create(
-            model="text-embedding-ada-002", 
-            input=text
-        )
-        embeddings = response['data'][0]['embedding']
-        return embeddings
+        client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+
+        result = client.models.embed_content(
+                model="text-embedding-004",
+                contents=text,
+                config=types.EmbedContentConfig(task_type="SEMANTIC_SIMILARITY")
+)
+        embeddings = [embedding.values for embedding in result.embeddings]
+
+        # If input is a single text, return first list of embeddings
+        return embeddings[0] if len(embeddings) == 1 else embeddings
     except Exception as e:
-        return f"Error generating embeddings: {e}"
-    
+        raise HTTPException(status_code=500, detail=f"Error generating embeddings: {e}")
 
 
 
 def parse_structure_gemini(text):
     client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
-
     model = "gemini-2.0-flash"
 
     prompt = f"""You are an expert in parsing medical report data. You are given this text: {text}. 
@@ -67,9 +66,7 @@ Your job is to summarize all the relevant information regarding the patient, tes
     contents = [
         types.Content(
             role="user",
-            parts=[
-                types.Part.from_text(text=prompt),
-            ],
+            parts=[types.Part.from_text(text=prompt)],
         ),
     ]
 
@@ -90,28 +87,36 @@ Your job is to summarize all the relevant information regarding the patient, tes
         return response.candidates[0].content.parts[0].text.strip()
 
     except Exception as e:
-        return f"Error processing with Gemini: {e}"
-    
+        raise HTTPException(status_code=500, detail=f"Error processing with Gemini: {e}")
+
 
 
 def structure_text_with_lm(text):
     try:
+        print("Structuring text with LM...")
         structured_text = parse_structure_gemini(text)
+        print(f"Structured text: {structured_text}")
+        
+        print("Generating embeddings...")
         embeddings = generate_embeddings(structured_text)
-        # result = upsert_to_pinecone(structured_text, embeddings)
-        # print(result)
-        return True
+        print(f"Embeddings generated: {embeddings[:5]}")  # Log a snippet of embeddings
+        
+        vector_id = str(hash(structured_text))
+        print(f"Upserting to Pinecone with vector ID: {vector_id}")
+        index_main.upsert(
+            vectors=[(vector_id, embeddings)],
+            namespace="medical_reports"
+        )
+        return f"Upserted data with ID {vector_id} into Pinecone"
     except Exception as e:
-        return f"Error structuring text: {str(e)}"
-    
-
-
+        print(f"Error in structure_text_with_lm: {e}")
+        raise HTTPException(status_code=500, detail=f"Error structuring text: {str(e)}")
 
 
 def process_pdf_with_tesseract_and_lm(pdf_path):
-    print(f"Entered in fucntion")
+    print(f"Entered in function")
     try:
-        images = convert_from_path(pdf_path, dpi=300)  # had to install poppler to get the pdf2image working fine, other wise facing internal server error 500
+        images = convert_from_path(pdf_path, dpi=300)
         print(f"Converted PDF into {len(images)} pages")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error converting PDF: {str(e)}")
@@ -126,6 +131,8 @@ def process_pdf_with_tesseract_and_lm(pdf_path):
     return structure_text_with_lm(full_text)
 
 
+
+
 @router.post("/upload-report")
 async def upload_report(
     file: UploadFile = File(...),
@@ -134,19 +141,16 @@ async def upload_report(
     description: str = Form(...),
     type: str = Form(...)
 ):    
-
     try:
         file_path = os.path.join(UPLOAD_DIR, file.filename)
         
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         
-        if(process_pdf_with_tesseract_and_lm(file_path)):
-
+        if process_pdf_with_tesseract_and_lm(file_path):
             conn = psycopg2.connect(Settings.DATABASE_URL, cursor_factory=RealDictCursor)
             cursor = conn.cursor()
             
-            # Extract file details
             file_details = {
                 "filename": file.filename,
                 "content_type": file.content_type,

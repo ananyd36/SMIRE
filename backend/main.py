@@ -67,6 +67,8 @@ async def add_record(record: AddMedicalRecord):
         conn.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
+
+
 @app.get("/get-records/{user_id}")
 async def get_records(user_id: str, type: str):
     try:
@@ -81,6 +83,8 @@ async def get_records(user_id: str, type: str):
     finally:
         conn.close()
         cursor.close()
+
+
 
 @app.post("/delete-record")
 async def delete_record(request : DelMedicalRecord):

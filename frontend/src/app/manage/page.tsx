@@ -39,11 +39,14 @@ export default function ManagePage() {
       if (data.status === "success") {
         if (recordType === "medicine") {
           setMedicineRecords(data.records);
+          setLoading(false);
         } else if (recordType === "report") {
           setReportRecords(data.records);
+          setLoading(false);
         }
       } else {
         setError("Failed to fetch records.");
+        setLoading(false);
       }
     } catch (err) {
       setError("Error fetching data.");
@@ -135,7 +138,8 @@ export default function ManagePage() {
         setFormData({ ...formData, name: "", description: "" });
         setFile(null);
         fetchRecords('report');
-        setError(null) // Refresh records
+        setError(null);
+        alert("File Uploaded Successfully");
       } else {
         setError("Failed to upload report.");
       }
