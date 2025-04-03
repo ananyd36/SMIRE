@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Request
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 import shutil
 import os
@@ -13,9 +13,7 @@ import pytesseract
 from google import genai
 from google.genai import types
 from pinecone import Pinecone, ServerlessSpec
-import openai
-from sentence_transformers import SentenceTransformer
-
+from services.manage_service import get_chat_response
 
 
 
@@ -102,9 +100,16 @@ def structure_text_with_lm(text):
         print(f"Embeddings generated: {embeddings[:5]}")  # Log a snippet of embeddings
         
         vector_id = str(hash(structured_text))
+        vector_data = [{
+            "id": vector_id,
+            "values": embeddings,
+            "metadata": {
+                "text" : structured_text
+                }
+        }]
         print(f"Upserting to Pinecone with vector ID: {vector_id}")
         index_main.upsert(
-            vectors=[(vector_id, embeddings)],
+            vectors=vector_data,
             namespace="medical_reports"
         )
         return f"Upserted data with ID {vector_id} into Pinecone"
@@ -171,5 +176,18 @@ async def upload_report(
             return {"status": "success", "file_details": file_details}
         else:
             return {"status": "failure"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
+    
+
+
+@router.post("/get-insights")
+async def get_insights(request: Request):    
+    try:    
+        request_body = await request.json()
+        user_id = request_body.get("user_id")
+        query = request_body.get("query")
+        response = get_chat_response(user_id, query)
+        return {"status": "success", "response": response}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")

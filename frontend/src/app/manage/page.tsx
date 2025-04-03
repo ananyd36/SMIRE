@@ -160,7 +160,7 @@ export default function ManagePage() {
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      const response = await fetch(`${apiUrl}/get-insights`, {
+      const response = await fetch(`${apiUrl}/api/get-insights`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: userId, query: chatQuery }),
@@ -168,7 +168,7 @@ export default function ManagePage() {
 
       const data = await response.json();
       if (data.status === "success") {
-        setChatResponse(data.response);
+        setChatResponse(data.response.response);
       } else {
         setChatResponse("Sorry, I couldn't find any insights related to your query.");
       }
