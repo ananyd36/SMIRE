@@ -14,8 +14,10 @@ from google import genai
 from google.genai import types
 from pinecone import Pinecone, ServerlessSpec
 from services.manage_service import get_chat_response
+from dotenv import load_dotenv
+from llama_parse import LlamaParse
 
-
+load_dotenv()
 
 
 router = APIRouter()
@@ -54,57 +56,57 @@ def generate_embeddings(text):
 
 
 
-def parse_structure_gemini(text):
-    client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
-    model = "gemini-2.0-flash"
+# def parse_structure_gemini(text):
+#     client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+#     model = "gemini-2.0-flash"
 
-    prompt = f"""You are an expert in parsing medical report data. You are given this text: {text}. 
-Your job is to summarize all the relevant information regarding the patient, tests results, test metadata like date of tests,etc. Keep it short as possible while covering all test results"""
+#     prompt = f"""You are an expert in parsing medical report data. You are given this text: {text}. 
+# Your job is to summarize all the relevant information regarding the patient, tests results, test metadata like date of tests, test types, test time, summaries of each test, etc. Structure everything in a concise manner and disregard text that doesnt relate to the patient or is just some general information of the test which is generally at the footer of a report."""
 
-    contents = [
-        types.Content(
-            role="user",
-            parts=[types.Part.from_text(text=prompt)],
-        ),
-    ]
+#     contents = [
+#         types.Content(
+#             role="user",
+#             parts=[types.Part.from_text(text=prompt)],
+#         ),
+#     ]
 
-    generate_content_config = types.GenerateContentConfig(
-        temperature=0,
-        top_p=1,
-        top_k=1,
-        max_output_tokens=len(text),
-        response_mime_type="text/plain",
-    )
+#     generate_content_config = types.GenerateContentConfig(
+#         temperature=0,
+#         top_p=1,
+#         top_k=1,
+#         max_output_tokens=len(text),
+#         response_mime_type="text/plain",
+#     )
 
-    try:
-        response = client.models.generate_content(
-            model=model,
-            contents=contents,
-            config=generate_content_config,
-        )
-        return response.candidates[0].content.parts[0].text.strip()
+#     try:
+#         response = client.models.generate_content(
+#             model=model,
+#             contents=contents,
+#             config=generate_content_config,
+#         )
+#         return response.candidates[0].content.parts[0].text.strip()
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error processing with Gemini: {e}")
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=f"Error processing with Gemini: {e}")
 
 
 
 def structure_text_with_lm(text):
     try:
-        print("Structuring text with LM...")
-        structured_text = parse_structure_gemini(text)
-        print(f"Structured text: {structured_text}")
+        # print("Structuring text with LM...")
+        # structured_text = parse_structure_gemini(text)
+        # print(f"Structured text: {structured_text}")
         
         print("Generating embeddings...")
-        embeddings = generate_embeddings(structured_text)
+        embeddings = generate_embeddings(text)
         print(f"Embeddings generated: {embeddings[:5]}")  # Log a snippet of embeddings
         
-        vector_id = str(hash(structured_text))
+        vector_id = str(hash(text))
         vector_data = [{
             "id": vector_id,
             "values": embeddings,
             "metadata": {
-                "text" : structured_text
+                "text" : text
                 }
         }]
         print(f"Upserting to Pinecone with vector ID: {vector_id}")
@@ -118,22 +120,26 @@ def structure_text_with_lm(text):
         raise HTTPException(status_code=500, detail=f"Error structuring text: {str(e)}")
 
 
-def process_pdf_with_tesseract_and_lm(pdf_path):
-    print(f"Entered in function")
-    try:
-        images = convert_from_path(pdf_path, dpi=300)
-        print(f"Converted PDF into {len(images)} pages")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error converting PDF: {str(e)}")
+async def process_pdf_with_tesseract_and_lm(pdf_path):
 
-    full_text = ""
-    for image in images:
-        try:
-            text = pytesseract.image_to_string(image)
-            full_text += text + "\n"
-        except Exception as e:
-            full_text += f"Error OCRing image: {str(e)}\n"
-    return structure_text_with_lm(full_text)
+    try:
+        print(f"Entered in function")
+        print(f"Processing PDF: {pdf_path}")
+        parser  = LlamaParse(result_type="markdown",
+                            user_prompt="""
+            This is a medical report. Extract all the relevant information regarding the patient, tests results, test metadata like date of tests, test name, patient name, test time, etc. Keep it short as possible while covering all test results.                                        
+
+    """)
+        documents = await parser.aload_data(pdf_path)
+        combined_text = ""
+        for i, doc in enumerate(documents):
+            numbered_text = f"Document {i+1}: {doc.text}"
+            combined_text += numbered_text + "\n\n" 
+        print(f"Exited process pdf with tesseract and lm")
+        print(combined_text)
+    except Exception as e:
+        print(f"Error in process_pdf_with_tesseract_and_lm: {str(e)}")
+    return structure_text_with_lm(combined_text)
 
 
 
@@ -152,7 +158,7 @@ async def upload_report(
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         
-        if process_pdf_with_tesseract_and_lm(file_path):
+        if await process_pdf_with_tesseract_and_lm(file_path):
             conn = psycopg2.connect(Settings.DATABASE_URL, cursor_factory=RealDictCursor)
             cursor = conn.cursor()
             

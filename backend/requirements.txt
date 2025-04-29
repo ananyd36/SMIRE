@@ -22,3 +22,4 @@ pytesseract
 google
 google-genai
 twilio
+llama-parse
