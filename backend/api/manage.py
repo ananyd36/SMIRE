@@ -158,7 +158,7 @@ async def upload_report(
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         
-        if await process_pdf_with_tesseract_and_lm(file_path):
+        if await process_pdf_with_llama_parse(file_path):
             conn = psycopg2.connect(Settings.DATABASE_URL, cursor_factory=RealDictCursor)
             cursor = conn.cursor()
             
