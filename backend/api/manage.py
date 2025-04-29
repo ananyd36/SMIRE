@@ -120,7 +120,7 @@ def structure_text_with_lm(text):
         raise HTTPException(status_code=500, detail=f"Error structuring text: {str(e)}")
 
 
-async def process_pdf_with_tesseract_and_lm(pdf_path):
+async def process_pdf_with_llama_parse(pdf_path):
 
     try:
         print(f"Entered in function")
