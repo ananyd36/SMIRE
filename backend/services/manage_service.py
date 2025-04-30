@@ -100,7 +100,10 @@ def get_chat_response(user_id: str, query: str):
         **Context:**
         {contexts}
 
-        Answer the query concisely and factually based on the provided context. Do not include explanations about the context itself. If the context does not contain enough information to fully answer the query, respond only with: "The provided context does not contain sufficient information to answer the question."
+        Answer the query concisely and factually based on the provided context. Do not include explanations about the context itself. If the query is about some test or marker like TSH, Haemoglobin, etc. Give some overview of the normal levels and how to keep them regulated.
+         For eg: Question: What is the normal range of TSH?,
+                Your Answer should be like TSH level for the [individual] are 1.737. \n TSH is a hormone produced by the pituitary gland that regulates the thyroid gland. The normal range for TSH is typically between 0.4 and 4.0 milliunits per liter (mU/L). To maintain healthy TSH levels, it's important to have a balanced diet, manage stress, and get regular exercise. If you have concerns about your TSH levels, consult with a healthcare professional for personalized advice.
+           If the context does not contain enough information to fully answer the query, respond only with: "The provided context does not contain sufficient information to answer the question."
         """
 
         print("Completing Gemini prompt...")
