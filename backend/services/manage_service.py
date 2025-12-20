@@ -1,3 +1,4 @@
+from dotenv import load_dotenv
 from fastapi import HTTPException
 from google import genai
 from google.genai import types
@@ -5,6 +6,7 @@ from pinecone import Pinecone, ServerlessSpec
 import os
 
 
+load_dotenv()
 
 # Initialize Pinecone
 api_key = os.getenv('PINECONE_API_KEY')
@@ -13,9 +15,11 @@ pc = Pinecone(api_key=api_key)
 index_name = 'smire'
 index_main = pc.Index(index_name)
 
+
+# method for generating embeddinggs
 def generate_embeddings(text):
     try:
-        client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+        client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 
         result = client.models.embed_content(
                 model="text-embedding-004",
@@ -23,7 +27,6 @@ def generate_embeddings(text):
                 config=types.EmbedContentConfig(task_type="SEMANTIC_SIMILARITY")
 )
         embeddings = [embedding.values for embedding in result.embeddings]
-
         return embeddings[0] if len(embeddings) == 1 else embeddings
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating embeddings: {e}")
@@ -31,9 +34,9 @@ def generate_embeddings(text):
 
 
 def complete_gemini(prompt : str):
-    client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
-    model = "gemini-2.0-flash"
-
+    api_key=os.getenv("GOOGLE_API_KEY")
+    client = genai.Client(api_key=api_key)
+    model = "gemini-3-flash-preview"
     prompt = prompt.strip()
     contents = [
         types.Content(
@@ -46,7 +49,7 @@ def complete_gemini(prompt : str):
         temperature=0,
         top_p=1,
         top_k=1,
-        max_output_tokens=4000,
+        max_output_tokens=4000, 
         response_mime_type="text/plain",
     )
 
@@ -57,6 +60,8 @@ def complete_gemini(prompt : str):
             config=generate_content_config,
         )
         return response.candidates[0].content.parts[0].text.strip()
+        # return "Gemini response placeholder"
+
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing with Gemini: {e}")
@@ -81,9 +86,6 @@ def get_chat_response(user_id: str, query: str):
         if not search_results.matches:
             return {"status": "success", "response": "No relevant data found for your query."}
 
-
-
-        print(search_results)
         print("Processing search results...")
         for match in search_results.matches:
             if 'metadata' in match and 'text' in match.metadata:
