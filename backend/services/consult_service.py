@@ -8,7 +8,7 @@ import json
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0, openai_api_key="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")
+llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0, openai_api_key=OPENAI_API_KEY)
 
 def get_consultations(question: str, messages: list):
 
