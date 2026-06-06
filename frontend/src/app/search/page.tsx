@@ -45,9 +45,13 @@ export default function FindPage() {
        } else {
          setError("Failed to load clinics.");
        }
-     } catch (err) {
-       setError("Error fetching clinics.");
-     } finally {
+     } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError("Error fetching data: " + err.message);
+        } else {
+          setError("An unknown error occurred.");
+        }
+      }  finally {
        setLoading(false);
      }
    }, () => {

@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import List, Dict
 
 
 class AddMedicalRecord(BaseModel):
@@ -23,3 +24,11 @@ class AppointmentBooking(BaseModel):
     doctor_name: str
     doctor_contact: str
     patient_details: PatientDetails
+
+class HistoryItem(BaseModel):
+    query: str
+    response: str
+
+class ConsultationRequest(BaseModel):
+    question: str
+    history: List[HistoryItem]

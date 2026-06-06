@@ -4,9 +4,9 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
+import uvicorn
 from models import AddMedicalRecord , DelMedicalRecord 
 from api import news, clinics, consult, book, manage
-from dotenv import load_dotenv
 from settings import Settings
 from twilio.twiml.voice_response import VoiceResponse, Gather
 import requests
@@ -26,10 +26,6 @@ os.environ["OPENAI_API_KEY"] = openai_api_key
 os.environ["SERPER_API_KEY"] = serper_api_key
 os.environ["OPENAI_MODEL_NAME"] = "gpt-3.5-turbo"
 
-origins = [
-    "http://localhost:3000",  # Local Next.js frontend
-    "http://frontend:3000",   # Docker Compose service name
-]
 
 app.add_middleware(
     CORSMiddleware,
@@ -139,3 +135,5 @@ async def process_confirmation(request: Request):
 
     return Response(str(response), media_type='application/xml')
 
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

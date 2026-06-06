@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { SortDescIcon } from "lucide-react";
 
 interface Record {
   id: number;
@@ -48,9 +47,13 @@ export default function ManagePage() {
         setError("Failed to fetch records.");
         setLoading(false);
       }
-    } catch (err) {
-      setError("Error fetching data.");
-    } finally {
+    } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError("Error fetching data: " + err.message);
+        } else {
+          setError("An unknown error occurred.");
+        }
+      }  finally {
       setLoading(false);
     }
   };
@@ -76,9 +79,13 @@ export default function ManagePage() {
       } else {
         setError("Failed to log medicine record.");
       }
-    } catch (err) {
-      setError("Error logging data.");
-    } finally {
+    } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError("Error fetching data: " + err.message);
+        } else {
+          setError("An unknown error occurred.");
+        }
+      }  finally {
       setLoading(false);
     }
   };
@@ -102,9 +109,13 @@ export default function ManagePage() {
         } else {
           setError("Failed to delete record.");
         }
-      } catch (err) {
-        setError("Error logging data.");
-      } finally {
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError("Error fetching data: " + err.message);
+        } else {
+          setError("An unknown error occurred.");
+        }
+      }  finally {
         setLoading(false);
       }
     };
@@ -143,9 +154,13 @@ export default function ManagePage() {
       } else {
         setError("Failed to upload report.");
       }
-    } catch (err) {
-      setError("Error uploading your report.");
-    } finally {
+    } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError("Error fetching data: " + err.message);
+        } else {
+          setError("An unknown error occurred.");
+        }
+      }  finally {
       setLoading(false);
     }
   };
@@ -172,9 +187,13 @@ export default function ManagePage() {
       } else {
         setChatResponse("Sorry, I couldn't find any insights related to your query.");
       }
-    } catch (err) {
-      setChatResponse("An error occurred while processing your request.");
-    } finally {
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setChatResponse("An error occurred while processing your request: " + err.message);
+        } else {
+          setChatResponse("An unknown error occurred while processing your request.");
+        }
+      } finally {
       setIsChatLoading(false);
     }
   };

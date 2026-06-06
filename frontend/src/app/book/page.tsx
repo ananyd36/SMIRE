@@ -18,7 +18,6 @@ export default function BookPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [booking, setBookingStatus] = useState(false);
 
 
 
@@ -55,8 +54,12 @@ export default function BookPage() {
         } else {
           setError("Failed to fetch doctors.");
         }
-      } catch (err) {
-        setError("Error fetching data.");
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError("Error fetching data: " + err.message);
+        } else {
+          setError("An unknown error occurred.");
+        }
       } finally {
         setLoading(false);
       }
@@ -84,14 +87,17 @@ export default function BookPage() {
       const data = await response.json();
       console.log(data);
       if (data.status === 'success') {
-        // Show booking initiated modal
-        setBookingStatus(true);
+        alert("Appointment booked successfully!");
       } else {
         console.log("Booking Failed")
         }
-    } catch (err) {
-      setError("Error initiating booking.");
-    }
+    } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError("Error fetching data: " + err.message);
+        } else {
+          setError("An unknown error occurred.");
+        }
+      } 
   };
 
 

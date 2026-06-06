@@ -46,8 +46,12 @@ export default function Home() {
         } else {
           setResponse("Failed to fetch consultation.");
         }
-      } catch (err) {
-        setResponse("Error fetching data.");
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setResponse("Error fetching data: " + err.message);
+        } else {
+          setResponse("An unknown error occurred.");
+        }
       } finally {
         setLoading(false);
       }

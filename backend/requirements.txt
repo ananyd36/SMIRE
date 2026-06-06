@@ -24,3 +24,8 @@ google-genai
 twilio
 llama-parse
 pinecone
+psycopg2
+python-dotenv
+langchain_community
+langchain_core
+langchain

@@ -10,7 +10,7 @@ load_dotenv()
 
 # Initialize Pinecone
 api_key = os.getenv('PINECONE_API_KEY')
-pc = Pinecone(api_key=api_key)
+pc = Pinecone(api_key=os.getenv('PINECONE_API_KEY'))
 
 index_name = 'smire'
 index_main = pc.Index(index_name)

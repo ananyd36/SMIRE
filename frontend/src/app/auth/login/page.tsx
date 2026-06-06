@@ -19,16 +19,18 @@ export default function Login() {
       email,
       password,
     });
+    
+    if (data) {
+      setEmail("");
+      setPassword("");
+      router.push("/");
+    }
 
     if (error) {
       setError(error.message);
       setEmail("");
       setPassword("");
-    } else {
-      setEmail("");
-      setPassword("");
-      router.push("/");
-    }
+    } 
   };
 
   return (
@@ -58,7 +60,7 @@ export default function Login() {
       </form>
 
       <p className="mt-4 text-gray-400">
-        Don't have an account?{" "}
+        {"Don't have an account?"}
         <Link href="/auth/register" className="text-blue-400 hover:underline">
           Register here
         </Link>
