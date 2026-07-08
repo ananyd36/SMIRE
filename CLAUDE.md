@@ -194,7 +194,14 @@ Frontend (`frontend/.env.local`): `NEXT_PUBLIC_API_URL`,
   (30-60s cold start on next request) — accepted tradeoff, no keep-alive
   configured.
 - **Frontend**: Vercel, project `smire_frontend`. Live at
-  `https://smirefrontend.vercel.app`.
+  `https://smirefrontend.vercel.app`. Auto-deploy from GitHub (`main`
+  branch) is now connected — but the project's **Root Directory must be
+  `frontend`**, not `.` (repo root); it defaulted to `.` from the original
+  manual project setup, which would have made every git-triggered build
+  fail (no `package.json` at the actual repo root). Fixed via a direct
+  `PATCH` to the Vercel API (no CLI subcommand exposes this setting).
+  Render's auto-deploy worked correctly out of the box by contrast, since
+  `render.yaml`'s `rootDir: backend` was set correctly from the start.
 - **Database**: Supabase's free Postgres (same project already used for
   auth) — **must use the connection pooler**
   (`aws-0-<region>.pooler.supabase.com:6543`, username
