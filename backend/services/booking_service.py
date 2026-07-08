@@ -22,24 +22,25 @@ def build_ics(request: BookingRequest) -> str:
     dtstamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     uid = f"{uuid.uuid4()}@smire.ai"
 
-    description = (
-        f"Reminder to confirm your appointment with {request.provider_name}. "
-        f"Contact: {request.provider_contact}. This was not booked directly "
-        f"with them — please call ahead to confirm."
-    )
+    description = f"Reminder: {request.provider_name}."
+    if request.provider_contact:
+        description += (
+            f" Contact: {request.provider_contact}. This was not booked "
+            f"directly with them — please call ahead to confirm."
+        )
     if request.notes:
         description += f" Notes: {request.notes}"
 
     lines = [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
-        "PRODID:-//SMIRE AI//Appointment Reminder//EN",
+        "PRODID:-//SMIRE AI//Reminder//EN",
         "BEGIN:VEVENT",
         f"UID:{uid}",
         f"DTSTAMP:{dtstamp}",
         f"DTSTART:{start.strftime('%Y%m%dT%H%M%S')}",
         f"DTEND:{end.strftime('%Y%m%dT%H%M%S')}",
-        f"SUMMARY:{_escape_ics_text(f'Appointment with {request.provider_name}')}",
+        f"SUMMARY:{_escape_ics_text(f'Reminder: {request.provider_name}')}",
         f"DESCRIPTION:{_escape_ics_text(description)}",
         f"LOCATION:{_escape_ics_text(request.provider_contact)}",
         "END:VEVENT",
@@ -50,19 +51,24 @@ def build_ics(request: BookingRequest) -> str:
 
 def send_confirmation_email(request: BookingRequest, ics_content: str) -> None:
     msg = MIMEMultipart()
-    msg["Subject"] = f"Your appointment reminder: {request.provider_name}"
+    msg["Subject"] = f"Your reminder: {request.provider_name}"
     msg["From"] = Settings.SMTP_FROM
     msg["To"] = request.patient_email
 
     body = (
         f"Hi {request.patient_name},\n\n"
-        f"This is a reminder for your requested appointment with "
-        f"{request.provider_name} on {request.appointment_datetime}.\n\n"
-        f"SMIRE AI found this contact info for them: {request.provider_contact}\n"
-        f"Please call ahead to confirm — this reminder does not book the "
-        f"appointment with them directly.\n\n"
-        f"A calendar invite is attached.\n"
+        f"This is a reminder: {request.provider_name}, "
+        f"on {request.appointment_datetime}.\n\n"
     )
+    if request.provider_contact:
+        body += (
+            f"SMIRE AI found this contact info for them: {request.provider_contact}\n"
+            f"Please call ahead to confirm — this reminder does not book the "
+            f"appointment with them directly.\n\n"
+        )
+    if request.notes:
+        body += f"Notes: {request.notes}\n\n"
+    body += "A calendar invite is attached.\n"
     msg.attach(MIMEText(body, "plain"))
 
     attachment = MIMEBase("text", "calendar", method="PUBLISH", name="appointment.ics")

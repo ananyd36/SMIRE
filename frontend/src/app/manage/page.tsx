@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
+import { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
 import AppShell from "@/components/layout/AppShell";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -30,10 +31,16 @@ export default function ManagePage() {
   const [chatResponse, setChatResponse] = useState("");
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [reminderDate, setReminderDate] = useState("");
+  const [reminderTime, setReminderTime] = useState("");
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user ?? null);
+      setUserId(data.user?.id ?? null);
+    });
   }, []);
 
   useEffect(() => {
@@ -80,8 +87,29 @@ export default function ManagePage() {
 
       const data = await response.json();
       if (data.status === "success") {
+        let reminderSent = false;
+        if (reminderDate && reminderTime && user?.email) {
+          const reminderResponse = await fetch(`${apiUrl}/api/add-to-calendar`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              provider_name: formData.name,
+              provider_contact: "",
+              patient_name: user.user_metadata?.full_name || "Patient",
+              patient_email: user.email,
+              appointment_datetime: `${reminderDate}T${reminderTime}:00`,
+              notes: formData.description,
+            }),
+          });
+          const reminderData = await reminderResponse.json();
+          reminderSent = reminderData.status === "success";
+        }
+
         setFormData({ ...formData, name: "", description: "" });
+        setReminderDate("");
+        setReminderTime("");
         fetchRecords("medicine");
+        if (reminderSent) alert("Medicine logged and reminder email sent!");
       } else {
         setError("Failed to log medicine record.");
       }
@@ -232,6 +260,26 @@ export default function ManagePage() {
                     required
                     placeholder="Enter medicine details, dosage, and schedule"
                   />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Set a Reminder (optional)</Label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <Input
+                      type="date"
+                      value={reminderDate}
+                      onChange={(e) => setReminderDate(e.target.value)}
+                      aria-label="Reminder date"
+                    />
+                    <Input
+                      type="time"
+                      value={reminderTime}
+                      onChange={(e) => setReminderTime(e.target.value)}
+                      aria-label="Reminder time"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Sends a calendar invite + email reminder to take this medicine.
+                  </p>
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? "Saving..." : "Save Medicine Record"}
