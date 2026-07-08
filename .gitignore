@@ -28,3 +28,4 @@ frontend/*.log
 # Vercel Deployment
 frontend/.vercel/
 frontend/.now/
+.claude/

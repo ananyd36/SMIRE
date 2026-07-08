@@ -186,6 +186,49 @@ Frontend (`frontend/.env.local`): `NEXT_PUBLIC_API_URL`,
   separate from the new `conversation_logs` Postgres table — not migrated,
   a possible future follow-up.
 
+## Deployment ($0/month, live as of 2026-07-08)
+
+- **Backend**: Render free Web Service, `backend/render.yaml` blueprint
+  (`runtime: python`, `rootDir: backend`). Live at
+  `https://smire-backend.onrender.com`. Spins down after 15 min idle
+  (30-60s cold start on next request) — accepted tradeoff, no keep-alive
+  configured.
+- **Frontend**: Vercel, project `smire_frontend`. Live at
+  `https://smirefrontend.vercel.app`.
+- **Database**: Supabase's free Postgres (same project already used for
+  auth) — **must use the connection pooler**
+  (`aws-0-<region>.pooler.supabase.com:6543`, username
+  `postgres.<project-ref>`), not the direct `db.<project-ref>.supabase.co:5432`
+  connection. The direct host resolves to an IPv6 address that Render's
+  network cannot reach (`Network is unreachable`) — this cost a full
+  redeploy cycle to discover, so don't revert to the direct connection
+  string. Free Supabase projects pause after a week of total inactivity
+  (un-pause manually from the dashboard if that happens — no keep-alive
+  configured here either).
+- **Vector DB**: Pinecone free Starter tier, unchanged, already cloud-hosted
+  before this deploy.
+- **`backend/requirements.txt`** was pruned from ~35 to 15 packages before
+  deploying — `groq`, `sqlalchemy`/`alembic`, `pgvector`, `psycopg[binary]`,
+  `pypdf`, `crewai`/`crewai_tools`, `celery`, `redis`, `transformers`,
+  `databricks-sdk`, `pytesseract`, `google`/`google-generativeai`, and bare
+  `langchain`/`langchain_community`/`langchain_core` were all confirmed
+  unused anywhere in the codebase (grepped) and removed — this matters
+  concretely for free-tier build time/disk, not just tidiness
+  (`transformers` alone pulls in `torch`).
+- **Cost reality check**: hosting itself is genuinely $0. `OPENAI_API_KEY`
+  (used by news/clinic/doctor search's write steps and consult) has no free
+  tier and incurs small real pay-as-you-go cost per call — a deliberate
+  choice to keep those agents on OpenAI rather than migrate them to Gemini's
+  free tier. Serper's free tier is a one-time 2,500-query credit, not
+  monthly recurring — will eventually need a paid plan under real traffic.
+- **Render CLI note**: `render services update` cannot switch an existing
+  service's runtime (e.g. docker → python) or add/change env vars — both
+  require deleting and recreating the service (fast, no data loss, since
+  services are stateless). If you ever need to change env vars again via
+  CLI, recreate rather than trying to update in place.
+- `TWILIO_*` env vars were intentionally not set on Render (dead code, see
+  [docs/agents/book_service.md](docs/agents/book_service.md)).
+
 ## Conventions going forward
 
 - New page/feature = new FastAPI router in `backend/api/`, new service module
