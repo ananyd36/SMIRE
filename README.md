@@ -1,95 +1,73 @@
-# SMILE WITH SMIRE 😊
+# SMIRE AI 😊
 
-## Project Outline: SMIRE AI - A Generative AI Medical Assistant
+**SMIRE AI** is a Generative AI medical assistant: an agentic + RAG platform
+for finding clinics/doctors, medical news, general consultation, and
+insights over your own uploaded medical reports.
 
-## 🛠 Project Overview
+**Live**: [smirefrontend.vercel.app](https://smirefrontend.vercel.app) (frontend) ·
+backend at `smire-backend.onrender.com` (free tier — may take 30-60s to
+wake up if idle).
 
-**SMIRE AI** is a **Generative AI-powered medical assistant** that provides users with
-**medical services** such as appointment booking, clinic/doctor search, medical
-news updates, OPD services, and emergency support. The system will leverage **AI/ML models**
-for intelligent responses and automation.
+For the full architecture, every agent's design, and current known
+limitations, see [CLAUDE.md](CLAUDE.md) and [docs/agents/](docs/agents/) —
+this README is just the quick tour.
 
-## 🚀 Key Features
+## Features
 
-### 1 Authentication using Supabase (Personalised Interaction )
+- **Find & Book Clinics/Doctors** (`/book`) — geo-scoped clinic and doctor
+  search (Google Maps via Serper), with an "Add to Calendar" reminder +
+  email confirmation for a selected appointment slot.
+- **Medical News** (`/news`) — recent medical/health news, summarized.
+- **Consult** (`/consult`) — general medical Q&A chat with ChatGPT-style
+  persisted conversation threads (multiple parallel conversations, stored
+  in your browser).
+- **Manage** (`/manage`) — log medications, upload medical reports (PDF →
+  parsed, chunked, embedded), and chat with your own reports via a
+  corrective-RAG pipeline that only answers from your real data (and says
+  so honestly when it can't).
+- **Auth**: Supabase email/password.
 
+## Architecture at a glance
+
+- **Frontend**: Next.js (App Router) + Tailwind + shadcn/ui, deployed on
+  Vercel.
+- **Backend**: FastAPI, deployed on Render. Every agent (news, clinic/doctor
+  search, consult, manage/RAG) is a hand-written **LangGraph** `StateGraph`
+  — structured LLM output, validation/grading nodes, and bounded retry
+  loops instead of hoping the model gets it right the first time.
+- **Data**: Postgres (Supabase) for medicine/report records and
+  conversation logs; Pinecone for report embeddings, scoped per user.
+- **LLMs**: OpenAI (`gpt-3.5-turbo`) for news/clinic/doctor/consult; Gemini
+  for manage/RAG (embeddings + grading + generation).
+
+See [CLAUDE.md](CLAUDE.md) for the full breakdown, including which
+tradeoffs were made deliberately and what's still a known rough edge.
+
+## Local development
+
+**Backend**:
+```bash
+cd backend
+source venv/bin/activate   # or create one: python -m venv venv
+pip install -r requirements.txt
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
-● Added a Authentication Layer to have personalised experience
-● Leveraged Supabase to perform registration, logging in and logging out functionalities.
+Needs a `backend/.env` with `DATABASE_URL`, `OPENAI_API_KEY`,
+`SERPER_API_KEY`, `PINECONE_API_KEY`, `GOOGLE_API_KEY`,
+`LLAMA_CLOUD_API_KEY`, `SMTP_HOST`/`SMTP_PORT`/`SMTP_USER`/`SMTP_PASSWORD`
+(see [CLAUDE.md](CLAUDE.md) for what each is used for).
 
+**Frontend**:
+```bash
+cd frontend
+npm install
+npm run dev
 ```
+Needs a `frontend/.env.local` with `NEXT_PUBLIC_API_URL`,
+`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 
-### 1 Conversational AI (Ask your daily doubts)
+## Deploying your own copy
 
-```
-● AI-powered chatbot for answering medical inquiries.
-● NLP-based symptom analysis (e.g., "I have a headache, what could be the reason?").
-● Integration with OpenAI API (GPT-4) for contextual responses.
-● Voice-to-text input for accessibility. - Work in progress
-```
-### 2  Appointment Booking System (Find nearby doctors/book appointment)
-
-```
-● Users can book medical appointments with verified doctors and hospitals.
-● Integration with Google Calendar/Outlook for scheduling. - Future Work
-● Appointment reminders and notifications. - Future Work
-```
-### 3  Medical News & Updates (Be up to date with all the latest news.)
-
-```
-● Fetch real-time medical news from reliable sources like WHO, CDC, and PubMed.
-● AI-generated health summaries for easy understanding.
-● Personalized health trend alerts.
-```
-## 5  Insights based on User Profile & Medical History - Work in Progress
-
-```
-● Securely store medical records & prescriptions.
-● AI-driven health recommendations based on history.
-● Users can download/share their reports.
-```
-## 6  Emergency Support - Future Work
-
-```
-● Emergency contact system to call an ambulance instantly.
-● Live chat with AI Assistant to provide first-aid guidance.
-● Integration with emergency helplines.
-```
-
-
-# 🖥 Tech Stack
-
-## Frontend:
-
-```
-● Next.js (React) for UI.
-● Tailwind CSS for responsive design.
-```
-## Backend:
-
-```
-● FastAPI / Flask (Python) for AI processing.
-● Node.js for API handling.
-```
-## Database & Storage:
-
-```
-● PostgreSQL for user and medical data.
-● Firebase / AWS S3 for storing reports and images. - YET TO IMPLEMENT
-```
-## AI/ML & APIs:
-
-
-```
-● OpenAI API / LLaMA / Gemini for Generative AI responses.
-● Google Maps API for clinic/doctor search.
-● Hugging Face Models for medical NLP.
-● Twilio API for appointment reminders.
-```
-# 🎯 Future Enhancements
-
-✅ **AI-powered diagnostics with image recognition (X-ray, ECG analysis).**
-✅ **Wearable health device integration (Fitbit, Apple Health).**
-
-
-
+Both services are configured for free hosting — see the **Deployment**
+section in [CLAUDE.md](CLAUDE.md) for the exact setup (Render blueprint,
+Supabase pooler connection gotcha, Vercel env vars).
