@@ -33,9 +33,9 @@ export default function AnimatedText() {
 
   return (
     <div className="h-16 flex items-center justify-center">
-      <p className="text-2xl font-light tracking-wide bg-gradient-to-r from-purple-400 to-blue-400 text-transparent bg-clip-text">
+      <p className="text-2xl font-light tracking-wide bg-gradient-to-r from-blue-600 to-blue-400 text-transparent bg-clip-text">
         {text}
-        <span className="animate-blink text-blue-400">|</span>
+        <span className="animate-blink text-blue-500">|</span>
       </p>
     </div>
   )

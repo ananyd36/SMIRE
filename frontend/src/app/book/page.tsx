@@ -1,9 +1,30 @@
 "use client";
 import { useState, useEffect } from "react";
-import Link from "next/link";
-import { User } from "@supabase/supabase-js";  
+import { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
-import Loading from "@/components/ui/loading"; // Import the Loading component
+import AppShell from "@/components/layout/AppShell";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+
+interface Clinic {
+  Name: string;
+  Location: string;
+  Link: string;
+  Description: string;
+}
 
 interface Doctor {
   name: string;
@@ -12,139 +33,283 @@ interface Doctor {
   description: string;
 }
 
-export default function BookPage() {
+interface Provider {
+  name: string;
+  contact: string;
+}
 
+export default function BookPage() {
+  const [clinics, setClinics] = useState<Clinic[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loadingClinics, setLoadingClinics] = useState(false);
+  const [loadingDoctors, setLoadingDoctors] = useState(false);
+  const [errorClinics, setErrorClinics] = useState<string | null>(null);
+  const [errorDoctors, setErrorDoctors] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
 
-
+  const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
+  const [notes, setNotes] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchDoctors();
-    async function fetchUser() {
-        const { data } = await supabase.auth.getUser();
-        setUser(data.user); 
-      }
-      fetchUser();
-    },  []);
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+  }, []);
 
-
-
-  const fetchDoctors = async () => {
-    setLoading(true);
-    setError(null);
+  const fetchClinics = async () => {
+    setLoadingClinics(true);
+    setErrorClinics(null);
     if (!navigator.geolocation) {
-      setError("Geolocation is not supported by your browser.");
+      setErrorClinics("Geolocation is not supported by your browser.");
+      setLoadingClinics(false);
       return;
     }
-    navigator.geolocation.getCurrentPosition(async (position) => {
-      const { latitude, longitude } = position.coords;
-
-      try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        const response = await fetch(
-          `${apiUrl}/api/get-doctors?lat=${latitude}&lng=${longitude}`
-        );
-        const data = await response.json();
-
-        if (data.status === "success") {
-          setDoctors(data.doctors);
-        } else {
-          setError("Failed to fetch doctors.");
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+          const response = await fetch(`${apiUrl}/api/get-clinics?lat=${latitude}&lng=${longitude}`);
+          const data = await response.json();
+          if (data.status === "success") {
+            setClinics(data.clinics);
+          } else {
+            setErrorClinics("Failed to load clinics.");
+          }
+        } catch (err: unknown) {
+          setErrorClinics(err instanceof Error ? "Error fetching data: " + err.message : "An unknown error occurred.");
+        } finally {
+          setLoadingClinics(false);
         }
-      } catch (err: unknown) {
-        if (err instanceof Error) {
-          setError("Error fetching data: " + err.message);
-        } else {
-          setError("An unknown error occurred.");
-        }
-      } finally {
-        setLoading(false);
-      }
-    });
+      },
+      () => {
+        setErrorClinics("Unable to retrieve your location.");
+        setLoadingClinics(false);
+      },
+    );
   };
 
-  const handleBookAppointment = async (doctor: Doctor) => {
+  const fetchDoctors = async () => {
+    setLoadingDoctors(true);
+    setErrorDoctors(null);
+    if (!navigator.geolocation) {
+      setErrorDoctors("Geolocation is not supported by your browser.");
+      setLoadingDoctors(false);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+          const response = await fetch(`${apiUrl}/api/get-doctors?lat=${latitude}&lng=${longitude}`);
+          const data = await response.json();
+          if (data.status === "success") {
+            setDoctors(data.doctors);
+          } else {
+            setErrorDoctors("Failed to fetch doctors.");
+          }
+        } catch (err: unknown) {
+          setErrorDoctors(err instanceof Error ? "Error fetching data: " + err.message : "An unknown error occurred.");
+        } finally {
+          setLoadingDoctors(false);
+        }
+      },
+      () => {
+        setErrorDoctors("Unable to retrieve your location.");
+        setLoadingDoctors(false);
+      },
+    );
+  };
+
+  const openCalendarDialog = (provider: Provider) => {
+    setSelectedProvider(provider);
+    setDate("");
+    setTime("");
+    setNotes("");
+    setSubmitMessage(null);
+  };
+
+  const handleAddToCalendar = async () => {
+    if (!selectedProvider || !date || !time || !user?.email) return;
+
+    setSubmitting(true);
+    setSubmitMessage(null);
+
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      const response = await fetch(`${apiUrl}/api/book-appointment`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+      const response = await fetch(`${apiUrl}/api/add-to-calendar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          doctor_name: doctor.name,
-          doctor_contact: doctor.contact,
-          patient_details: {
-            name: user ? user.user_metadata?.full_name : "Anany",
-            phone: user?.email,
-          }
-        })
+          provider_name: selectedProvider.name,
+          provider_contact: selectedProvider.contact,
+          patient_name: user.user_metadata?.full_name || "Patient",
+          patient_email: user.email,
+          appointment_datetime: `${date}T${time}:00`,
+          notes,
+        }),
       });
-  
+
       const data = await response.json();
-      console.log(data);
-      if (data.status === 'success') {
-        alert("Appointment booked successfully!");
+      if (data.status === "success") {
+        setSubmitMessage("Reminder sent to your email — remember to call ahead to confirm.");
       } else {
-        console.log("Booking Failed")
-        }
+        setSubmitMessage(data.message || "Failed to send reminder.");
+      }
     } catch (err: unknown) {
-        if (err instanceof Error) {
-          setError("Error fetching data: " + err.message);
-        } else {
-          setError("An unknown error occurred.");
-        }
-      } 
+      setSubmitMessage(err instanceof Error ? "Error: " + err.message : "An unknown error occurred.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-
-
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center relative">
-      {loading ? (
-        <Loading />
-      ) : (
-        <>
-          <Link href="/" className="absolute top-6 left-6 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-md text-white">
-            ← Back to Home
-          </Link>
-          <h1 className="text-4xl font-bold mb-4 pt-8">Book an Appointment</h1>
-          <p className="text-lg text-gray-300 pb-4">Easily schedule your next medical consultation with us.</p>
-        </>
-      )}
+    <AppShell>
+      <div className="mx-auto max-w-3xl text-center">
+        <h1 className="text-4xl font-bold">Find & Book Clinics/Doctors</h1>
+        <p className="mt-2 text-muted-foreground">
+          Find nearby clinics and doctors, then add a reminder to your calendar.
+        </p>
+      </div>
 
-      <button
-        onClick={fetchDoctors}
-        className="mt-4 px-6 py-3 bg-blue-500 hover:bg-blue-600 rounded-md text-white"
-      >
-        Fetch Nearby Doctors!
-      </button>
+      <Tabs defaultValue="clinics" className="mx-auto mt-8 max-w-5xl">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="clinics">Clinics</TabsTrigger>
+          <TabsTrigger value="doctors">Doctors</TabsTrigger>
+        </TabsList>
 
-      {loading ? (
-        <Loading />
-      ) : error ? (
-        <p className="text-red-500 mt-4">{error}</p>
-      ) : (
-        <div className="prose prose-invert w-full flex flex-col items-center gap-y-6 px-4 pt-4 pb-16">
-          {doctors.map((doctor, index) => (
-            <div key={index} className="bg-gray-800 p-6 rounded-md shadow-md w-full max-w-4xl text-center">
-              <h3 className="text-xl font-semibold">{doctor.name}</h3>
-              <p className="text-gray-400">{doctor.workplace}</p>
-              <p className="text-gray-300 mt-2">📞 {doctor.contact}</p>
-              <p className="text-gray-400">{doctor.description}</p>
-              <button
-                onClick={() => handleBookAppointment(doctor)}
-                className="mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-md"
+        <TabsContent value="clinics">
+          <div className="text-center">
+            <Button onClick={fetchClinics} disabled={loadingClinics}>
+              {loadingClinics ? "Searching..." : "Fetch Nearby Clinics!"}
+            </Button>
+          </div>
+
+          {errorClinics && (
+            <Alert variant="destructive" className="mt-6">
+              <AlertDescription>{errorClinics}</AlertDescription>
+            </Alert>
+          )}
+
+          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {loadingClinics &&
+              Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
+
+            {!loadingClinics &&
+              clinics.map((clinic, index) => (
+                <Card key={index}>
+                  <CardHeader>
+                    <a
+                      href={clinic.Link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-semibold text-primary hover:underline"
+                    >
+                      <CardTitle className="text-base">{clinic.Name}</CardTitle>
+                    </a>
+                  </CardHeader>
+                  <CardContent className="space-y-1 text-sm">
+                    <p className="text-muted-foreground">{clinic.Location}</p>
+                    <p>{clinic.Description}</p>
+                  </CardContent>
+                  <CardFooter>
+                    <Button
+                      className="w-full"
+                      onClick={() => openCalendarDialog({ name: clinic.Name, contact: clinic.Location })}
+                    >
+                      Add to Calendar
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="doctors">
+          <div className="text-center">
+            <Button onClick={fetchDoctors} disabled={loadingDoctors}>
+              {loadingDoctors ? "Searching..." : "Fetch Nearby Doctors!"}
+            </Button>
+          </div>
+
+          {errorDoctors && (
+            <Alert variant="destructive" className="mt-6">
+              <AlertDescription>{errorDoctors}</AlertDescription>
+            </Alert>
+          )}
+
+          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {loadingDoctors &&
+              Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
+
+            {!loadingDoctors &&
+              doctors.map((doctor, index) => (
+                <Card key={index}>
+                  <CardHeader>
+                    <CardTitle className="text-base">{doctor.name}</CardTitle>
+                    <p className="text-sm text-muted-foreground">{doctor.workplace}</p>
+                  </CardHeader>
+                  <CardContent className="space-y-1 text-sm">
+                    <p>📞 {doctor.contact}</p>
+                    <p className="text-muted-foreground">{doctor.description}</p>
+                  </CardContent>
+                  <CardFooter>
+                    <Button
+                      className="w-full"
+                      onClick={() => openCalendarDialog({ name: doctor.name, contact: doctor.contact })}
+                    >
+                      Add to Calendar
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      <Dialog open={!!selectedProvider} onOpenChange={(open) => !open && setSelectedProvider(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add to Calendar</DialogTitle>
+            <DialogDescription>
+              This sends you a calendar reminder and confirmation email for{" "}
+              {selectedProvider?.name} — it does not book the appointment with them
+              directly. Call ahead to confirm the slot.
+            </DialogDescription>
+          </DialogHeader>
+
+          {submitMessage ? (
+            <p className="text-sm">{submitMessage}</p>
+          ) : (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="date">Date</Label>
+                  <Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="time">Time</Label>
+                  <Input id="time" type="time" value={time} onChange={(e) => setTime(e.target.value)} required />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="notes">Notes (optional)</Label>
+                <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Anything you want to remember" />
+              </div>
+              <Button
+                className="w-full"
+                onClick={handleAddToCalendar}
+                disabled={submitting || !date || !time}
               >
-                Book Appointment
-              </button>
+                {submitting ? "Sending..." : "Send Reminder"}
+              </Button>
             </div>
-          ))}
-        </div>
-      )}
-    </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </AppShell>
   );
 }

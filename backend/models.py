@@ -16,14 +16,13 @@ class DelMedicalRecord(BaseModel):
     description: str
 
 
-class PatientDetails(BaseModel):
-    name: str
-    phone: str
-
-class AppointmentBooking(BaseModel):
-    doctor_name: str
-    doctor_contact: str
-    patient_details: PatientDetails
+class BookingRequest(BaseModel):
+    provider_name: str
+    provider_contact: str
+    patient_name: str
+    patient_email: str
+    appointment_datetime: str  # ISO 8601, e.g. "2026-07-10T14:30:00"
+    notes: str = ""
 
 class HistoryItem(BaseModel):
     query: str

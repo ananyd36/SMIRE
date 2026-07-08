@@ -23,7 +23,7 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
   }, [authenticated, router]);
 
   if (authenticated === null) {
-    return <div className="text-center mt-10 text-white">Loading...</div>;
+    return <div className="mt-10 text-center text-muted-foreground">Loading...</div>;
   }
 
   return <>{children}</>;

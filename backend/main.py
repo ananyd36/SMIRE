@@ -1,5 +1,5 @@
 import json
-from fastapi import FastAPI, Query, HTTPException, Response, Request
+from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import os
 import psycopg2
@@ -8,7 +8,6 @@ import uvicorn
 from models import AddMedicalRecord , DelMedicalRecord 
 from api import news, clinics, consult, book, manage
 from settings import Settings
-from twilio.twiml.voice_response import VoiceResponse, Gather
 import requests
 from dotenv import load_dotenv
 
@@ -98,42 +97,6 @@ async def delete_record(request : DelMedicalRecord):
         cursor.close()
 
 
-
-@app.post('/handle-booking-call')
-async def handle_booking_call(request: Request):
-    form_data = await request.form()
-    print(form_data)  
-    
-    response = VoiceResponse()
-
-    with response.gather(
-        numDigits=1,
-        action='/process-confirmation',  
-        method='POST'  
-    ) as gather:
-        gather.say("Hello, we are calling to confirm an appointment. Press 1 to confirm, 2 to reschedule.")
-
-    response.say("Sorry, we didn't receive your input.")
-    response.redirect('/handle-booking-call')
-
-    return Response(str(response), media_type='application/xml')
-
-
-@app.post('/process-confirmation')
-async def process_confirmation(request: Request):
-    form_data = await request.form()
-    digit_pressed = form_data.get('Digits')  #
-
-    if digit_pressed == '1':
-        print("User Pressed 1 - Appointment Confirmed")
-    elif digit_pressed == '2':
-        print("User Pressed 2 - Rescheduling")
-
-    response = VoiceResponse()
-    response.say("Thank you for your response. Goodbye.")
-    response.hangup()
-
-    return Response(str(response), media_type='application/xml')
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

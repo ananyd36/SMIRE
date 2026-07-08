@@ -1,48 +1,116 @@
-from crewai import Crew, Task, Agent
-from crewai_tools import ScrapeWebsiteTool, SerperDevTool
-from fastapi import Query
+import os
+from typing import TypedDict
+
+import requests
+from langchain_openai import ChatOpenAI
+from langgraph.graph import StateGraph, END
+from pydantic import BaseModel
+
+from settings import Settings
+
+MAX_SEARCH_ATTEMPTS = 2
+MIN_PLACES = 4
+MAX_DESCRIBE = 6
+
+llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0.3, openai_api_key=os.getenv("OPENAI_API_KEY"))
 
 
-
-search_tool = SerperDevTool()
-scrape_tool = ScrapeWebsiteTool()
-
+class Description(BaseModel):
+    descriptions: list[str]
 
 
-def get_doctors(lat: float = Query(...), lng: float = Query(...)):
-    doctor_search_agent = Agent(
-    role="Expert in Doctor Search",
-    goal="Find nearby medical professionals with high ratings and decent reviews.Use {lattitude} lattitude and {longitude} longitude to base your reference point"
-         "General Practitioners (GPs), Dentists, Pediatricians, Dermatologists, Gynecologists can be some of the fields to search for",
-    backstory="Specializing in medical professionals research, this agent "
-              "uses internet and health related knowledge articles/blogs/websites "
-              "to provide a list of medical professionals near the user. With a knack for data, "
-              "the Medical Professional search Agent is the cornerstone for "
-              "searching top medical professionals.",
-    verbose=True,
-    allow_delegation=True,
-    tools = [scrape_tool, search_tool]
+class DoctorState(TypedDict):
+    lat: float
+    lng: float
+    zoom: int
+    places: list[dict]
+    doctors: list[dict]
+    attempts: int
+    valid: bool
+
+
+def search_places(state: DoctorState) -> DoctorState:
+    ll = f"@{state['lat']},{state['lng']},{state['zoom']}z"
+    print(f"Searching Serper Maps for doctors near {ll} (attempt {state['attempts'] + 1}/{MAX_SEARCH_ATTEMPTS})...")
+    response = requests.post(
+        "https://google.serper.dev/maps",
+        headers={"X-API-KEY": Settings.SERPER_API_KEY, "Content-Type": "application/json"},
+        json={"q": "doctors dentists pediatricians dermatologists gynecologists", "ll": ll},
     )
+    response.raise_for_status()
+    places = response.json().get("places", [])
+    print(f"Got {len(places)} places")
 
-    # Task for news fetching
-    fetch_doctors_task = Task(
-        description="Search and retrieve at least 6 professionals who are medically acclaimed and well known for their services.Change source immediately if any type of conditions are there to access the site.",
-        expected_output="Keeping context lenght under 16385 tokens and output a JSON list(with 'name','workplace','contact', 'description' as keys) and values as retrieved by the agent. Output just the JSON object string and no other strings as prefix or suffix to that object. Just the object string enclosed in [] brackets.",
-        agent = doctor_search_agent,
+    next_zoom = max(state["zoom"] - 3, 8)  # zoom out (widen radius) if we need to retry
+    return {**state, "places": places, "zoom": next_zoom, "attempts": state["attempts"] + 1}
+
+
+def check_places(state: DoctorState) -> DoctorState:
+    valid = len(state["places"]) >= MIN_PLACES
+    print(f"Check {'passed' if valid else 'failed'}: {len(state['places'])} places (need >= {MIN_PLACES})")
+    return {**state, "valid": valid}
+
+
+def route_after_check(state: DoctorState) -> str:
+    if state["valid"] or state["attempts"] >= MAX_SEARCH_ATTEMPTS:
+        return "write"
+    return "retry"
+
+
+def write_descriptions(state: DoctorState) -> DoctorState:
+    places = state["places"][:MAX_DESCRIBE]
+    print(f"Writing descriptions for {len(places)} places...")
+
+    numbered = "\n".join(
+        f"{i + 1}. {p.get('title', 'Unknown')} - {p.get('category', p.get('type', 'medical practice'))}, "
+        f"rating {p.get('rating', 'n/a')} ({p.get('ratingCount', 0)} reviews)"
+        for i, p in enumerate(places)
     )
-    search_crew = Crew(
-    agents=[doctor_search_agent],
-    tasks=[fetch_doctors_task],
-    verbose=True
+    prompt = f"""Write one short, friendly, factual one-line description for each
+medical professional/practice below, in the same order. Base it only on the
+facts given — do not invent details that aren't present. Return exactly
+{len(places)} descriptions.
+
+{numbered}
+"""
+
+    structured_llm = llm.with_structured_output(Description)
+    result = structured_llm.invoke(prompt)
+    descriptions = result.descriptions
+
+    doctors = []
+    for i, place in enumerate(places):
+        fallback = f"{place.get('category', place.get('type', 'Medical practice'))} · {place.get('rating', 'N/A')}★ ({place.get('ratingCount', 0)} reviews)"
+        doctors.append(
+            {
+                "name": place.get("title", "Unknown"),
+                "workplace": place.get("address", ""),
+                "contact": place.get("phoneNumber", "Not listed"),
+                "description": descriptions[i] if i < len(descriptions) else fallback,
+            }
+        )
+    return {**state, "doctors": doctors}
+
+
+graph = StateGraph(DoctorState)
+graph.add_node("search_places", search_places)
+graph.add_node("check_places", check_places)
+graph.add_node("write_descriptions", write_descriptions)
+
+graph.set_entry_point("search_places")
+graph.add_edge("search_places", "check_places")
+graph.add_conditional_edges(
+    "check_places",
+    route_after_check,
+    {"write": "write_descriptions", "retry": "search_places"},
+)
+graph.add_edge("write_descriptions", END)
+
+doctor_graph = graph.compile()
+
+
+def get_doctors(lat: float, lng: float) -> list[dict]:
+    result = doctor_graph.invoke(
+        {"lat": lat, "lng": lng, "zoom": 13, "places": [], "doctors": [], "attempts": 0, "valid": False}
     )
-
-    location_inputs =  {
-       "lattitude" : str(lat),
-       "longitude" : str(lng),
-   }
-
-
-    result = search_crew.kickoff(inputs = location_inputs)
-
-
-    return result
+    return result["doctors"]

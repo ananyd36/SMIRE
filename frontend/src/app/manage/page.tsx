@@ -1,6 +1,16 @@
 "use client";
 import { useState, useEffect } from "react";
-import Link from "next/link";
+import ReactMarkdown from "react-markdown";
+import { supabase } from "@/lib/supabaseClient";
+import AppShell from "@/components/layout/AppShell";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Record {
   id: number;
@@ -11,9 +21,8 @@ interface Record {
 }
 
 export default function ManagePage() {
-  const [activeTab, setActiveTab] = useState("medicine");
   const [medicineRecords, setMedicineRecords] = useState<Record[]>([]);
-  const [reportRecords, setReportRecords] = useState<Record[]>([]); 
+  const [reportRecords, setReportRecords] = useState<Record[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({ type: "medicine", name: "", description: "" });
@@ -21,47 +30,44 @@ export default function ManagePage() {
   const [chatResponse, setChatResponse] = useState("");
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
-  const userId = "ashar534";
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchRecords(activeTab);
-  }, [activeTab]);
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+  }, []);
 
+  useEffect(() => {
+    if (!userId) return;
+    fetchRecords("medicine");
+    fetchRecords("report");
+  }, [userId]);
 
-  const fetchRecords = async (recordType: string | undefined) => {
+  const fetchRecords = async (recordType: string) => {
     try {
       setLoading(true);
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
       const response = await fetch(`${apiUrl}/get-records/${userId}?type=${recordType}`);
       const data = await response.json();
-  
+
       if (data.status === "success") {
-        if (recordType === "medicine") {
-          setMedicineRecords(data.records);
-          setLoading(false);
-        } else if (recordType === "report") {
-          setReportRecords(data.records);
-          setLoading(false);
-        }
+        if (recordType === "medicine") setMedicineRecords(data.records);
+        else setReportRecords(data.records);
       } else {
         setError("Failed to fetch records.");
-        setLoading(false);
       }
     } catch (err: unknown) {
-        if (err instanceof Error) {
-          setError("Error fetching data: " + err.message);
-        } else {
-          setError("An unknown error occurred.");
-        }
-      }  finally {
+      setError(err instanceof Error ? "Error fetching data: " + err.message : "An unknown error occurred.");
+    } finally {
       setLoading(false);
     }
   };
-  
 
-  // Handle form submission for medicine
   const handleMedicineSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!userId) {
+      setError("Still loading your account, please try again in a moment.");
+      return;
+    }
     setLoading(true);
 
     try {
@@ -75,59 +81,51 @@ export default function ManagePage() {
       const data = await response.json();
       if (data.status === "success") {
         setFormData({ ...formData, name: "", description: "" });
-        fetchRecords('medicine'); // Refresh records
+        fetchRecords("medicine");
       } else {
         setError("Failed to log medicine record.");
       }
     } catch (err: unknown) {
-        if (err instanceof Error) {
-          setError("Error fetching data: " + err.message);
-        } else {
-          setError("An unknown error occurred.");
-        }
-      }  finally {
+      setError(err instanceof Error ? "Error fetching data: " + err.message : "An unknown error occurred.");
+    } finally {
       setLoading(false);
     }
   };
 
+  const deleteRecord = async (type_id: number, type: string, name: string, description: string) => {
+    setLoading(true);
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const response = await fetch(`${apiUrl}/delete-record`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: userId, id: type_id, type, name, description }),
+      });
 
-    // Handle form submission for medicine
-    const deleteRecord = async (type_id : number, type : string, name : string, description : string) => {
-      setLoading(true);
-      console.log(JSON.stringify({ userid : userId, id : type_id, type : type , name : name, description: description}));
-      try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        const response = await fetch(`${apiUrl}/delete-record`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_id : userId, id :type_id,  type : type , name : name, description: description}),
-        });
-  
-        const data = await response.json();
-        if (data.status === "success") {
-          fetchRecords(activeTab); 
-        } else {
-          setError("Failed to delete record.");
-        }
-      } catch (err: unknown) {
-        if (err instanceof Error) {
-          setError("Error fetching data: " + err.message);
-        } else {
-          setError("An unknown error occurred.");
-        }
-      }  finally {
-        setLoading(false);
+      const data = await response.json();
+      if (data.status === "success") {
+        fetchRecords(type);
+      } else {
+        setError("Failed to delete record.");
       }
-    };
+    } catch (err: unknown) {
+      setError(err instanceof Error ? "Error fetching data: " + err.message : "An unknown error occurred.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // Handle file upload for medical reports
   const handleReportSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) {
       setError("Please select a file to upload.");
       return;
     }
-    
+    if (!userId) {
+      setError("Still loading your account, please try again in a moment.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -148,28 +146,23 @@ export default function ManagePage() {
       if (data.status === "success") {
         setFormData({ ...formData, name: "", description: "" });
         setFile(null);
-        fetchRecords('report');
+        fetchRecords("report");
         setError(null);
         alert("File Uploaded Successfully");
       } else {
         setError("Failed to upload report.");
       }
     } catch (err: unknown) {
-        if (err instanceof Error) {
-          setError("Error fetching data: " + err.message);
-        } else {
-          setError("An unknown error occurred.");
-        }
-      }  finally {
+      setError(err instanceof Error ? "Error fetching data: " + err.message : "An unknown error occurred.");
+    } finally {
       setLoading(false);
     }
   };
 
-  // Handle chat query submission
   const handleChatSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!chatQuery.trim()) return;
-    
+    if (!chatQuery.trim() || !userId) return;
+
     setIsChatLoading(true);
     setChatResponse("");
 
@@ -187,256 +180,203 @@ export default function ManagePage() {
       } else {
         setChatResponse("Sorry, I couldn't find any insights related to your query.");
       }
-      } catch (err: unknown) {
-        if (err instanceof Error) {
-          setChatResponse("An error occurred while processing your request: " + err.message);
-        } else {
-          setChatResponse("An unknown error occurred while processing your request.");
-        }
-      } finally {
+    } catch (err: unknown) {
+      setChatResponse(
+        err instanceof Error
+          ? "An error occurred while processing your request: " + err.message
+          : "An unknown error occurred while processing your request.",
+      );
+    } finally {
       setIsChatLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center p-6">
-      {/* Back Button */}
-      <Link href="/" className="absolute top-6 left-6 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-md">
-        ← Back to Home
-      </Link>
+    <AppShell>
+      <h1 className="mb-6 text-center text-3xl font-bold">Manage Your Medical Records</h1>
 
-      <h1 className="text-3xl font-bold mb-6 mt-16">Manage Your Medical Records</h1>
+      {error && (
+        <Alert variant="destructive" className="mx-auto mb-6 max-w-2xl">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
-      {/* Tabs */}
-      <div className="w-full max-w-3xl mb-6">
-        <div className="flex border-b border-gray-700">
-          <button
-            onClick={() => setActiveTab("medicine")}
-            className={`px-6 py-3 font-medium ${
-              activeTab === "medicine"
-                ? "border-b-2 border-blue-500 text-blue-500"
-                : "text-gray-400 hover:text-gray-300"
-            }`}
-          >
-            Log Medicine
-          </button>
-          <button
-            onClick={() => setActiveTab("report")}
-            className={`px-6 py-3 font-medium ${
-              activeTab === "report"
-                ? "border-b-2 border-blue-500 text-blue-500"
-                : "text-gray-400 hover:text-gray-300"
-            }`}
-          >
-            Upload Reports
-          </button>
-          <button
-            onClick={() => setActiveTab("insights")}
-            className={`px-6 py-3 font-medium ${
-              activeTab === "insights"
-                ? "border-b-2 border-blue-500 text-blue-500"
-                : "text-gray-400 hover:text-gray-300"
-            }`}
-          >
-            Chat with Reports
-          </button>
-        </div>
-      </div>
+      <Tabs defaultValue="medicine" className="mx-auto max-w-2xl">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="medicine">Log Medicine</TabsTrigger>
+          <TabsTrigger value="report">Upload Reports</TabsTrigger>
+          <TabsTrigger value="insights">Chat with Reports</TabsTrigger>
+        </TabsList>
 
-      {activeTab === "medicine" && (
-        <div className="w-full max-w-2xl flex flex-col items-center">
-          {/* Medicine Form */}
-          <form onSubmit={handleMedicineSubmit} className="bg-gray-800 p-6 rounded-md shadow-md w-full max-w-lg mb-8">
-            <h2 className="text-xl font-semibold mb-4">Log Medication</h2>
-            
-            <label className="block mt-4 mb-2">Medicine Name:</label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-              placeholder="Enter medicine name"
-              className="w-full p-2 rounded-md bg-gray-700 border border-gray-600"
-            />
+        <TabsContent value="medicine" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Log Medication</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleMedicineSubmit} className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label>Medicine Name</Label>
+                  <Input
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    required
+                    placeholder="Enter medicine name"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Details (dosage, frequency, etc)</Label>
+                  <Textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    required
+                    placeholder="Enter medicine details, dosage, and schedule"
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Saving..." : "Save Medicine Record"}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
 
-            <label className="block mt-4 mb-2">Details (dosage, frequency, etc):</label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              required
-              placeholder="Enter medicine details, dosage, and schedule"
-              className="w-full p-2 rounded-md bg-gray-700 border border-gray-600 h-24"
-            />
-
-            <button 
-              type="submit" 
-              className="mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-md w-full"
-            >
-              {loading ? "Saving..." : "Save Medicine Record"}
-            </button>
-          </form>
-
-          {/* Display Medicine Records */}
-          <div className="w-full">
-            <h2 className="text-xl font-semibold mb-4">Your Medicine Records</h2>
-            {loading ? (
-              <p>Loading...</p>
-            ) : medicineRecords.length > 0 ? (
+          <div>
+            <h2 className="mb-3 text-lg font-semibold">Your Medicine Records</h2>
+            {medicineRecords.length > 0 ? (
               <div className="grid gap-4">
-                {medicineRecords
-                  .filter(record => record.type === "medicine")
-                  .map((record) => (
-                    <div key={record.id} className="bg-gray-800 p-4 rounded-md shadow-md">
-                      <div className="flex justify-between">
-                        <h3 className="text-lg font-semibold">
-                          {record.name} 
-                          <span className="ml-2 text-sm bg-gray-700 px-2 py-1 rounded">
-                            💊 Medicine
-                          </span>
-                        </h3>
+                {medicineRecords.map((record) => (
+                  <Card key={record.id}>
+                    <CardContent className="pt-6">
+                      <div className="mb-2 flex items-center gap-2">
+                        <h3 className="font-semibold">{record.name}</h3>
+                        <Badge variant="accent">💊 Medicine</Badge>
                       </div>
-                      <p className="text-gray-300 mt-2">{record.description}</p>
-                      <p className="text-gray-500 text-sm mt-2">Added on: {new Date(record.date_added).toLocaleString()}</p>
-                      <button 
-                      onClick={() => deleteRecord(record.id, 'medicine', record.name, record.description)} 
-                      className="mt-4 px-4 py-2 bg-red-500 hover:bg-red-600 rounded-md w-full"
-                    >
-                      Delete Record
-                    </button>
-                    </div>
-                  ))}
+                      <p className="text-sm text-muted-foreground">{record.description}</p>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        Added on: {new Date(record.date_added).toLocaleString()}
+                      </p>
+                      <Button
+                        variant="destructive"
+                        className="mt-4 w-full"
+                        onClick={() => deleteRecord(record.id, "medicine", record.name, record.description)}
+                      >
+                        Delete Record
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             ) : (
-              <p className="text-gray-400">No medicine records found. Start by adding a medicine.</p>
+              <p className="text-sm text-muted-foreground">No medicine records found. Start by adding a medicine.</p>
             )}
           </div>
-        </div>
-      )}
+        </TabsContent>
 
-      {/* Report Upload Form & Records */}
-  {activeTab === "report" && (
-    <div className="">
-      {/* Report Upload Form */}
-      <form onSubmit={handleReportSubmit} className="bg-gray-800 p-6 rounded-md shadow-md w-full max-w-lg mb-8">
-        <h2 className="text-xl font-semibold mb-4">Upload Medical Report</h2>
-        
-        <label className="block mb-2">Report Title:</label>
-        <input
-          type="text"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          required
-          placeholder="Enter report title"
-          className="w-full p-2 rounded-md bg-gray-700 border border-gray-600"
-        />
+        <TabsContent value="report" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Upload Medical Report</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleReportSubmit} className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label>Report Title</Label>
+                  <Input
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    required
+                    placeholder="Enter report title"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Report Description</Label>
+                  <Textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    required
+                    placeholder="Enter details about this report"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Upload File</Label>
+                  <Input type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+                  {file && (
+                    <p className="text-xs text-muted-foreground">
+                      Selected file: {file.name} ({Math.round(file.size / 1024)} KB)
+                    </p>
+                  )}
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Uploading..." : "Upload Report"}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
 
-        <label className="block mt-4 mb-2">Report Description:</label>
-        <textarea
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          required
-          placeholder="Enter details about this report"
-          className="w-full p-2 rounded-md bg-gray-700 border border-gray-600 h-24"
-        />
+          <div>
+            <h2 className="mb-3 text-lg font-semibold">Your Report Records</h2>
+            {reportRecords.length > 0 ? (
+              <div className="grid gap-4">
+                {reportRecords.map((record) => (
+                  <Card key={record.id}>
+                    <CardContent className="pt-6">
+                      <div className="mb-2 flex items-center gap-2">
+                        <h3 className="font-semibold">{record.name}</h3>
+                        <Badge variant="accent">📄 Report</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{record.description}</p>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        Added on: {new Date(record.date_added).toLocaleString()}
+                      </p>
+                      <Button
+                        variant="destructive"
+                        className="mt-4 w-full"
+                        onClick={() => deleteRecord(record.id, "report", record.name, record.description)}
+                      >
+                        Delete Record
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No report records found. Start by uploading a report.</p>
+            )}
+          </div>
+        </TabsContent>
 
-        <div className="mt-4">
-          <label className="block mb-2">Upload File:</label>
-          <input
-            type="file"
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
-            className="w-full p-2 rounded-md bg-gray-700 border border-gray-600"
-          />
-          {file && (
-            <p className="text-sm text-gray-400 mt-2">
-              Selected file: {file.name} ({Math.round(file.size / 1024)} KB)
-            </p>
-          )}
-        </div>
-
-        <button 
-          type="submit" 
-          className="mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-md w-full"
-        >
-          {loading ? "Uploading..." : "Upload Report"}
-        </button>
-      </form>
-
-      {/* Display Report Records */}
-      <h2 className="text-xl font-semibold mb-4">Your Report Records</h2>
-      {loading ? (
-        <p>Loading...</p>
-      ) : reportRecords.length > 0 ? (
-        <div className="grid gap-4">
-          {reportRecords.map((record) => (
-            <div key={record.id} className="bg-gray-800 p-4 rounded-md shadow-md">
-              <h3 className="text-lg font-semibold">
-                {record.name} 
-                <span className="ml-2 text-sm bg-gray-700 px-2 py-1 rounded">
-                  📄 Report
-                </span>
-              </h3>
-              <p className="text-gray-300 mt-2">{record.description}</p>
-              <p className="text-gray-500 text-sm mt-2">Added on: {new Date(record.date_added).toLocaleString()}</p>
-              <button 
-                      onClick={() => deleteRecord(record.id, 'report', record.name, record.description)} 
-                      className="mt-4 px-4 py-2 bg-red-500 hover:bg-red-600 rounded-md w-full"
-                    >
-                      Delete Record
-                    </button>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="text-gray-400">No report records found. Start by uploading a report.</p>
-      )}
-        </div>
-        
-      )}
-
-            {/* Report Upload Form */}
-            {activeTab === "insights" && (
-          <div className="w-full flex justify-center ">
-          <div className="w-3/5 center bg-gray-800 p-6 rounded-md shadow-md mt-8">
-            <h2 className="text-xl font-semibold mb-4">Ask for Medical Insights</h2>
-            
-              <div className="mb-4 bg-gray-700 rounded-md p-4 h-48 overflow-y-auto">
+        <TabsContent value="insights">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Ask for Medical Insights</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-4 h-48 overflow-y-auto rounded-md bg-secondary p-4">
                 {chatResponse ? (
-                  <div className="text-white">{chatResponse}</div>
+                  <div className="prose prose-sm max-w-none">
+                    <ReactMarkdown>{chatResponse}</ReactMarkdown>
+                  </div>
                 ) : isChatLoading ? (
-                  <div className="text-gray-400">Analyzing your medical records...</div>
+                  <p className="text-muted-foreground">Analyzing your medical records...</p>
                 ) : (
-                  <div className="text-gray-400">Hi! How are you?</div>
+                  <p className="text-muted-foreground">Hi! How are you?</p>
                 )}
               </div>
-            
-            <form onSubmit={handleChatSubmit} className="flex">
-              <input
-                type="text"
-                value={chatQuery}
-                onChange={(e) => setChatQuery(e.target.value)}
-                placeholder="Ask about your health records..."
-                className="flex-grow p-2 rounded-l-md bg-gray-700 border border-gray-600"
-              />
-              <button 
-                type="submit" 
-                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-r-md"
-                disabled={isChatLoading}
-              >
-                {isChatLoading ? "..." : "Ask"}
-              </button>
-            </form>
-          </div>
 
-          </div>
-
-      )}
-
-      {/* Error Message */}
-      {error && <p className="text-red-500 mb-4">{error}</p>}
-
-
-
-
-    </div>
+              <form onSubmit={handleChatSubmit} className="flex gap-2">
+                <Input
+                  value={chatQuery}
+                  onChange={(e) => setChatQuery(e.target.value)}
+                  placeholder="Ask about your health records..."
+                />
+                <Button type="submit" disabled={isChatLoading}>
+                  {isChatLoading ? "..." : "Ask"}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </AppShell>
   );
 }
